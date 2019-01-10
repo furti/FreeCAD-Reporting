@@ -1,0 +1,23 @@
+{
+  "name": "freecad-reporting",
+  "version": "0.0.1",
+  "description": "SQL Like Reporting for FreeCAD Documents",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "parse": "canopy src/sql_grammar.peg --lang python && mv src/sql_grammar.py sql/sql_grammar.py"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/furti/FreeCAD-Reporting.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/furti/FreeCAD-Reporting/issues"
+  },
+  "homepage": "https://github.com/furti/FreeCAD-Reporting#readme",
+  "dependencies": {
+    "canopy": "^0.3.0"
+  }
+}

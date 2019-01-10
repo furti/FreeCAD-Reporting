@@ -1,0 +1,22 @@
+# SQL Subset Grammar
+
+grammar sql
+
+    Statement <- `Select` __
+        FromClause
+        Semicolon %make_statement
+
+    FromClause <- `From` __ Reference %prepare_from_clause
+
+    Semicolon <- _ ";"
+
+    # Basics
+    Reference <- [a-zA-Z0-9]+ %make_reference
+
+    # optional whitespace
+    _ <- [ \t\r\n]*
+
+    # mandatory whitespace
+    __ <- [ \t\r\n]+
+
+    # End Basics
