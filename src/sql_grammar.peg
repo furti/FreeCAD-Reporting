@@ -14,7 +14,7 @@ grammar sql
 
     Columns <- (Column (_ "," _ Column)*) %prepare_columns
 
-    Column <- Asterisk / Operand
+    Column <- Asterisk / Function / Operand
     
     # Clauses End
 
@@ -37,9 +37,20 @@ grammar sql
 
     # Boolean End
 
-    Operand <- Number / Literal / Reference
+    # Functions
+    
+    Function <- FunctionName _ "(" _ (Asterisk / Operand) _ ")" %make_calculation
+
+    FunctionName <- `Sum` %make_sum_operator 
+        / `Count` %make_count_operator 
+        / `Min` %make_min_operator 
+        / `Max` %make_max_operator
+
+    # Functions End
 
     # Basics
+    Operand <- Number / Literal / Reference
+
     Reference <- [a-zA-Z0-9]+ %make_reference
 
     Literal <- "'" (!"'" .)* "'" %make_literal

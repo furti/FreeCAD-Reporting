@@ -83,6 +83,13 @@ class TreeNode9(TreeNode):
 class TreeNode10(TreeNode):
     def __init__(self, text, offset, elements):
         super(TreeNode10, self).__init__(text, offset, elements)
+        self.FunctionName = elements[0]
+        self._ = elements[5]
+
+
+class TreeNode11(TreeNode):
+    def __init__(self, text, offset, elements):
+        super(TreeNode11, self).__init__(text, offset, elements)
         self._ = elements[0]
 
 
@@ -380,9 +387,12 @@ class Grammar(object):
         address0 = self._read_Asterisk()
         if address0 is FAILURE:
             self._offset = index1
-            address0 = self._read_Operand()
+            address0 = self._read_Function()
             if address0 is FAILURE:
                 self._offset = index1
+                address0 = self._read_Operand()
+                if address0 is FAILURE:
+                    self._offset = index1
         self._cache['Column'][index0] = (address0, self._offset)
         return address0
 
@@ -749,6 +759,170 @@ class Grammar(object):
         self._cache['ComparisonOperator'][index0] = (address0, self._offset)
         return address0
 
+    def _read_Function(self):
+        address0, index0 = FAILURE, self._offset
+        cached = self._cache['Function'].get(index0)
+        if cached:
+            self._offset = cached[1]
+            return cached[0]
+        index1, elements0 = self._offset, []
+        address1 = FAILURE
+        address1 = self._read_FunctionName()
+        if address1 is not FAILURE:
+            elements0.append(address1)
+            address2 = FAILURE
+            address2 = self._read__()
+            if address2 is not FAILURE:
+                elements0.append(address2)
+                address3 = FAILURE
+                chunk0 = None
+                if self._offset < self._input_size:
+                    chunk0 = self._input[self._offset:self._offset + 1]
+                if chunk0 == '(':
+                    address3 = TreeNode(self._input[self._offset:self._offset + 1], self._offset)
+                    self._offset = self._offset + 1
+                else:
+                    address3 = FAILURE
+                    if self._offset > self._failure:
+                        self._failure = self._offset
+                        self._expected = []
+                    if self._offset == self._failure:
+                        self._expected.append('"("')
+                if address3 is not FAILURE:
+                    elements0.append(address3)
+                    address4 = FAILURE
+                    address4 = self._read__()
+                    if address4 is not FAILURE:
+                        elements0.append(address4)
+                        address5 = FAILURE
+                        index2 = self._offset
+                        address5 = self._read_Asterisk()
+                        if address5 is FAILURE:
+                            self._offset = index2
+                            address5 = self._read_Operand()
+                            if address5 is FAILURE:
+                                self._offset = index2
+                        if address5 is not FAILURE:
+                            elements0.append(address5)
+                            address6 = FAILURE
+                            address6 = self._read__()
+                            if address6 is not FAILURE:
+                                elements0.append(address6)
+                                address7 = FAILURE
+                                chunk1 = None
+                                if self._offset < self._input_size:
+                                    chunk1 = self._input[self._offset:self._offset + 1]
+                                if chunk1 == ')':
+                                    address7 = TreeNode(self._input[self._offset:self._offset + 1], self._offset)
+                                    self._offset = self._offset + 1
+                                else:
+                                    address7 = FAILURE
+                                    if self._offset > self._failure:
+                                        self._failure = self._offset
+                                        self._expected = []
+                                    if self._offset == self._failure:
+                                        self._expected.append('")"')
+                                if address7 is not FAILURE:
+                                    elements0.append(address7)
+                                else:
+                                    elements0 = None
+                                    self._offset = index1
+                            else:
+                                elements0 = None
+                                self._offset = index1
+                        else:
+                            elements0 = None
+                            self._offset = index1
+                    else:
+                        elements0 = None
+                        self._offset = index1
+                else:
+                    elements0 = None
+                    self._offset = index1
+            else:
+                elements0 = None
+                self._offset = index1
+        else:
+            elements0 = None
+            self._offset = index1
+        if elements0 is None:
+            address0 = FAILURE
+        else:
+            address0 = self._actions.make_calculation(self._input, index1, self._offset, elements0)
+            self._offset = self._offset
+        self._cache['Function'][index0] = (address0, self._offset)
+        return address0
+
+    def _read_FunctionName(self):
+        address0, index0 = FAILURE, self._offset
+        cached = self._cache['FunctionName'].get(index0)
+        if cached:
+            self._offset = cached[1]
+            return cached[0]
+        index1 = self._offset
+        chunk0 = None
+        if self._offset < self._input_size:
+            chunk0 = self._input[self._offset:self._offset + 3]
+        if chunk0 is not None and chunk0.lower() == 'Sum'.lower():
+            address0 = self._actions.make_sum_operator(self._input, self._offset, self._offset + 3)
+            self._offset = self._offset + 3
+        else:
+            address0 = FAILURE
+            if self._offset > self._failure:
+                self._failure = self._offset
+                self._expected = []
+            if self._offset == self._failure:
+                self._expected.append('`Sum`')
+        if address0 is FAILURE:
+            self._offset = index1
+            chunk1 = None
+            if self._offset < self._input_size:
+                chunk1 = self._input[self._offset:self._offset + 5]
+            if chunk1 is not None and chunk1.lower() == 'Count'.lower():
+                address0 = self._actions.make_count_operator(self._input, self._offset, self._offset + 5)
+                self._offset = self._offset + 5
+            else:
+                address0 = FAILURE
+                if self._offset > self._failure:
+                    self._failure = self._offset
+                    self._expected = []
+                if self._offset == self._failure:
+                    self._expected.append('`Count`')
+            if address0 is FAILURE:
+                self._offset = index1
+                chunk2 = None
+                if self._offset < self._input_size:
+                    chunk2 = self._input[self._offset:self._offset + 3]
+                if chunk2 is not None and chunk2.lower() == 'Min'.lower():
+                    address0 = self._actions.make_min_operator(self._input, self._offset, self._offset + 3)
+                    self._offset = self._offset + 3
+                else:
+                    address0 = FAILURE
+                    if self._offset > self._failure:
+                        self._failure = self._offset
+                        self._expected = []
+                    if self._offset == self._failure:
+                        self._expected.append('`Min`')
+                if address0 is FAILURE:
+                    self._offset = index1
+                    chunk3 = None
+                    if self._offset < self._input_size:
+                        chunk3 = self._input[self._offset:self._offset + 3]
+                    if chunk3 is not None and chunk3.lower() == 'Max'.lower():
+                        address0 = self._actions.make_max_operator(self._input, self._offset, self._offset + 3)
+                        self._offset = self._offset + 3
+                    else:
+                        address0 = FAILURE
+                        if self._offset > self._failure:
+                            self._failure = self._offset
+                            self._expected = []
+                        if self._offset == self._failure:
+                            self._expected.append('`Max`')
+                    if address0 is FAILURE:
+                        self._offset = index1
+        self._cache['FunctionName'][index0] = (address0, self._offset)
+        return address0
+
     def _read_Operand(self):
         address0, index0 = FAILURE, self._offset
         cached = self._cache['Operand'].get(index0)
@@ -1007,7 +1181,7 @@ class Grammar(object):
         if elements0 is None:
             address0 = FAILURE
         else:
-            address0 = TreeNode10(self._input[index1:self._offset], index1, elements0)
+            address0 = TreeNode11(self._input[index1:self._offset], index1, elements0)
             self._offset = self._offset
         self._cache['Semicolon'][index0] = (address0, self._offset)
         return address0

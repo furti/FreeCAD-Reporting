@@ -2,21 +2,22 @@ from sql import sql_parser
 
 
 class DocumentObject(object):
-    def __init__(self, name, tag, role):
+    def __init__(self, name, tag, role, num):
         self.name = name
         self.tag = tag
         self.role = role
+        self.num = num
 
     def __str__(self):
-        return 'name: %s, tag: %s, role: %s' % (self.name, self.tag, self.role)
+        return 'name: %s, tag: %s, role: %s, num: %s' % (self.name, self.tag, self.role, self.num)
 
 
-wall = DocumentObject('Wall', 'inside', 'wall')
-window = DocumentObject('Window', 'living', 'window')
-space = DocumentObject('Space', 'living', 'space')
-space001 = DocumentObject('Space001', 'bedroom', 'space')
-space002 = DocumentObject('Space002', 'bedroom', 'space')
-space003 = DocumentObject('Space003', 'something', 'space')
+wall = DocumentObject('Wall', 'inside', 'wall', 1)
+window = DocumentObject('Window', 'living', 'window', 2)
+space = DocumentObject('Space', 'living', 'space', 3)
+space001 = DocumentObject('Space001', 'bedroom', 'space', 4)
+space002 = DocumentObject('Space002', 'bedroom', 'space', 5)
+space003 = DocumentObject('Space003', 'something', 'space', 6)
 
 documentObjects = [
     wall,
@@ -123,6 +124,29 @@ def selectWithBracketsWhereClause():
 
     assert result == [[space], [space003]]
 
+def selectWithSumFunction():
+    result = executeStatement(
+        "Select Sum(num) From document")
+
+    assert result == [[21]]
+
+def selectWithCountFunction():
+    result = executeStatement(
+        "Select Count(*) From document Where role = 'space'")
+
+    assert result == [[4]]
+
+def selectWithMinFunction():
+    result = executeStatement(
+        "Select Min(num) From document")
+
+    assert result == [[1]]
+
+def selectWithMaxFunction():
+    result = executeStatement(
+        "Select Max(num) From document")
+
+    assert result == [[6]]
 
 def run():
     statementShouldParseWithDifferentStyles()
@@ -134,3 +158,7 @@ def run():
     selectWithAndWhereClause()
     selectWithOrWhereClause()
     selectWithBracketsWhereClause()
+    selectWithSumFunction()
+    selectWithCountFunction()
+    selectWithMinFunction()
+    selectWithMaxFunction()

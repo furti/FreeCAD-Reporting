@@ -37,6 +37,7 @@ class SelectStatement(object):
 class Columns(object):
     def __init__(self, columns):
         self.columns = columns
+        self.grouping = columns[0].grouping
 
     def execute(self, objectList):
         result = []
@@ -44,6 +45,9 @@ class Columns(object):
         for o in objectList:
             result.append([column.execute(o) for column in self.columns])
 
+        if self.grouping:
+            return [result[-1]]
+        
         return result
 
     def __str__(self):
@@ -121,6 +125,20 @@ class ReferenceExtractor(object):
 
     def __str__(self):
         return self.ref.__str__()
+
+
+class CalculationExtractor(object):
+    def __init__(self, calculation):
+        self.calculation = calculation
+        self.currentValue = None
+
+    def extract(self, o):
+        self.currentValue = self.calculation.execute(o, self.currentValue)
+
+        return self.currentValue
+    
+    def __str__(self):
+        return '%s'%(self.calculation)
 
 
 class Reference(object):
@@ -242,6 +260,78 @@ class OrBooleanOperator(object):
         return 'OR'
 # Boolean end
 
+# Functions Start
+
+
+class FunctionOperator(object):
+    pass
+
+
+class SumFunctionOperator(FunctionOperator):
+    def execute(self, left, right):
+        if left is None:
+            return right
+
+        return left + right
+
+    def __str__(self):
+        return 'SUM'
+
+
+class CountFunctionOperator(FunctionOperator):
+    def execute(self, left, right):
+        if left is None:
+            return 1
+
+        return left + 1
+
+    def __str__(self):
+        return 'COUNT'
+
+
+class MinFunctionOperator(FunctionOperator):
+    def execute(self, left, right):
+        if left is None:
+            return right
+
+        if left < right:
+            return left
+        else:
+            return right
+
+    def __str__(self):
+        return 'MIN'
+
+
+class MaxFunctionOperator(FunctionOperator):
+    def execute(self, left, right):
+        if left is None:
+            return right
+
+        if left > right:
+            return left
+        else:
+            return right
+
+    def __str__(self):
+        return 'MAX'
+
+
+class Calculation(object):
+    def __init__(self, operator, dataExtractor, name):
+        self.operator = operator
+        self.dataExtractor = dataExtractor
+        self.name = name
+
+    def execute(self, o, currentValue):
+        value = self.dataExtractor.extract(o)
+
+        return self.operator.execute(currentValue, value)
+    
+    def __str__(self):
+        return '%s(%s)'%(self.operator, self.dataExtractor)
+# Functions End
+
 
 def findReference(elements):
     for element in elements:
@@ -255,6 +345,12 @@ def findBooleanExpression(elements):
             return element
 
 
+def findFunctionOperator(elements):
+    for element in elements:
+        if isinstance(element, FunctionOperator):
+            return element
+
+
 def findExtractor(element):
     if isinstance(element, Asterisk):
         return (IdentityExtractor(), '*', False)
@@ -265,8 +361,8 @@ def findExtractor(element):
     if isinstance(element, Reference):
         return (ReferenceExtractor(element), element.value, False)
 
-    # if isinstance(element, Calculation):
-    #     return (CalculationExtractor(element), element.name, True)
+    if isinstance(element, Calculation):
+        return (CalculationExtractor(element), element.name, True)
 
     return (None, None, None)
 
@@ -328,8 +424,9 @@ class ParserActions(object):
         comparisonOperator = elements[2]
         rightDataExtractor = findExtractor(elements[4])
 
-        comparison = BooleanComparison(leftDataExctractor[0], rightDataExtractor[0], comparisonOperator)
-        
+        comparison = BooleanComparison(
+            leftDataExctractor[0], rightDataExtractor[0], comparisonOperator)
+
         print('\ncomparison %s' % (comparison))
         printElements(elements)
 
@@ -339,16 +436,18 @@ class ParserActions(object):
         leftExpression = elements[0]
         booleanOperator = elements[2]
         rightExpression = elements[4]
-        expression = SimpleBooleanExpression(leftExpression, rightExpression, booleanOperator)
+        expression = SimpleBooleanExpression(
+            leftExpression, rightExpression, booleanOperator)
 
         print('\nsimple %s' % (expression))
         printElements(elements)
 
         return expression
-    
+
     def make_complex_boolean_expression(self, input, start, end, elements):
-        
-        booleanExpressions = [element for element in elements if isinstance(element, BooleanExpression)]
+
+        booleanExpressions = [
+            element for element in elements if isinstance(element, BooleanExpression)]
 
         # print(booleanExpressions)
 
@@ -391,6 +490,27 @@ class ParserActions(object):
 
     def make_boolean_operator_or(self, input, start, end):
         return OrBooleanOperator()
+
+    def make_sum_operator(self, input, start, end):
+        return SumFunctionOperator()
+
+    def make_count_operator(self, input, start, end):
+        return CountFunctionOperator()
+
+    def make_min_operator(self, input, start, end):
+        return MinFunctionOperator()
+
+    def make_max_operator(self, input, start, end):
+        return MaxFunctionOperator()
+
+    def make_calculation(self, input, start, end, elements):
+        operator = findFunctionOperator(elements)
+        
+        for element in elements:
+            extractor = findExtractor(element)
+
+            if extractor[0] is not None:
+                return Calculation(operator, extractor[0], input[start:end])
 
 
 class SqlParser(object):
