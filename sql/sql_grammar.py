@@ -432,7 +432,7 @@ class Grammar(object):
         if elements0 is None:
             address0 = FAILURE
         else:
-            address0 = TreeNode6(self._input[index2:self._offset], index2, elements0)
+            address0 = self._actions.make_simple_boolean_expression(self._input, index2, self._offset, elements0)
             self._offset = self._offset
         if address0 is FAILURE:
             self._offset = index1

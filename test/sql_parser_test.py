@@ -2,15 +2,20 @@ from sql import sql_parser
 
 
 class DocumentObject(object):
-    def __init__(self, name):
+    def __init__(self, name, tag, role):
         self.name = name
+        self.tag = tag
+        self.role = role
+    
+    def __str__(self):
+        return 'name: %s, tag: %s, role: %s' % (self.name, self.tag, self.role)
 
 
-wall = DocumentObject('Wall')
-window = DocumentObject('Window')
-space = DocumentObject('Space')
-space001 = DocumentObject('Space001')
-space002 = DocumentObject('Space002')
+wall = DocumentObject('Wall', 'inside', 'wall')
+window = DocumentObject('Window', 'living', 'window')
+space = DocumentObject('Space', 'living', 'space')
+space001 = DocumentObject('Space001', 'bedroom', 'space')
+space002 = DocumentObject('Space002', 'bedroom', 'space')
 
 documentObjects = [
     wall,
@@ -44,7 +49,8 @@ def executeStatement(statementString, doPrint=True):
     result = statement.execute()
 
     if doPrint:
-        print(result)
+        for columns in result:
+            print([element.__str__() for element in columns])
 
     return result
 
@@ -92,6 +98,11 @@ def selectWithSimpleWhereClause():
 
     assert result == [[wall]]
 
+def selectWithAndWhereClause():
+    result = executeStatement("Select * From document Where role = 'space' and tag = 'bedroom'")
+
+    assert result == [[space001], [space002]]
+
 def run():
     statementShouldParseWithDifferentStyles()
     selectAsteriskFromDocument()
@@ -99,3 +110,4 @@ def run():
     selectNameFromDocument()
     selectNameAndStaticValuesFromDocument()
     selectWithSimpleWhereClause()
+    selectWithAndWhereClause()

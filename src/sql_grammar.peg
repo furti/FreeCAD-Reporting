@@ -19,7 +19,7 @@ grammar sql
     # Clauses End
 
     # Boolean Start
-    BooleanExpression <- BooleanComparison __ BooleanOperator __ BooleanExpression
+    BooleanExpression <- BooleanComparison __ BooleanOperator __ BooleanExpression %make_simple_boolean_expression
         / BooleanComparison
         / "(" _ BooleanExpression _ ")" (__ BooleanOperator __ BooleanExpression)*
     

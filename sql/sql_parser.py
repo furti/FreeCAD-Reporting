@@ -31,7 +31,7 @@ class SelectStatement(object):
             return [o for o in objectList if self.whereClause.matches(o)]
 
     def __str__(self):
-        return 'Select %s %s' % (self.columns, self.fromClause)
+        return 'Select %s %s %s' % (self.columns, self.fromClause, self.whereClause)
 
 
 class Columns(object):
@@ -81,10 +81,16 @@ class FromClause(object):
 
 class WhereClause(object):
     def __init__(self, booleanExpression):
+        if booleanExpression is None:
+            raise ValueError('BooleanExpression must not be None')
+
         self.booleanExpression = booleanExpression
 
     def matches(self, o):
         return self.booleanExpression.execute(o)
+
+    def __str__(self):
+        return 'Where %s' % (self.booleanExpression)
 
 
 class IdentityExtractor(object):
@@ -136,11 +142,24 @@ class Asterisk(object):
 
 
 class BooleanExpression(object):
-    def __init__(self, booleanExpression):
-        self.booleanExpression = booleanExpression
+    def execute(self, o):
+        raise NotImplementedError('Subclasses must override this method')
+
+
+class SimpleBooleanExpression(BooleanExpression):
+    def __init__(self, leftExpression, rightExpression, booleanOperator):
+        self.leftExpression = leftExpression
+        self.rightExpression = rightExpression
+        self.booleanOperator = booleanOperator
 
     def execute(self, o):
-        self.booleanExpression.execute(o)
+        left = self.leftExpression.execute(o)
+        right = self.rightExpression.execute(o)
+
+        return self.booleanOperator.compare(left, right)
+
+    def __str__(self):
+        return '%s %s %s' % (self.leftExpression, self.booleanOperator, self.rightExpression)
 
 
 class BooleanComparison(BooleanExpression):
@@ -155,35 +174,72 @@ class BooleanComparison(BooleanExpression):
 
         return self.comparisonOperator.compare(left, right)
 
+    def __str__(self):
+        return '%s %s %s' % (self.leftDataExtractor, self.comparisonOperator, self.rightDataExtractor)
+
 
 class GreaterThanOrEqualsComparisonOperator(object):
     def compare(self, left, right):
         return left >= right
+
+    def __str__(self):
+        return '>='
 
 
 class LessThanOrEqualsComparisonOperator(object):
     def compare(self, left, right):
         return left <= right
 
+    def __str__(self):
+        return '<='
+
 
 class NotEqualsComparisonOperator(object):
     def compare(self, left, right):
         return left != right
+
+    def __str__(self):
+        return '!='
 
 
 class EqualsComparisonOperator(object):
     def compare(self, left, right):
         return left == right
 
+    def __str__(self):
+        return '='
+
 
 class GreaterThanComparisonOperator(object):
     def compare(self, left, right):
         return left > right
 
+    def __str__(self):
+        return '>'
+
 
 class LessThanComparisonOperator(object):
     def compare(self, left, right):
         return left < right
+
+    def __str__(self):
+        return '<'
+
+
+class AndBooleanOperator(object):
+    def compare(self, left, right):
+        return left and right
+
+    def __str__(self):
+        return 'AND'
+
+
+class OrBooleanOperator(object):
+    def compare(self, left, right):
+        return left or right
+
+    def __str__(self):
+        return 'OR'
 # Boolean end
 
 
@@ -195,7 +251,7 @@ def findReference(elements):
 
 def findBooleanExpression(elements):
     for element in elements:
-        if isinstance(element, BooleanComparison):
+        if isinstance(element, BooleanExpression):
             return element
 
 
@@ -274,6 +330,13 @@ class ParserActions(object):
 
         return BooleanComparison(leftDataExctractor[0], rightDataExtractor[0], comparisonOperator)
 
+    def make_simple_boolean_expression(self, input, start, end, elements):
+        leftExpression = elements[0]
+        booleanOperator = elements[2]
+        rightExpression = elements[4]
+
+        return SimpleBooleanExpression(leftExpression, rightExpression, booleanOperator)
+
     def make_asterisk(self, input, start, end):
         return Asterisk()
 
@@ -300,6 +363,12 @@ class ParserActions(object):
 
     def make_comp_operator_lt(self, input, start, end):
         return LessThanComparisonOperator()
+
+    def make_boolean_operator_and(self, input, start, end):
+        return AndBooleanOperator()
+
+    def make_boolean_operator_or(self, input, start, end):
+        return OrBooleanOperator()
 
 
 class SqlParser(object):
