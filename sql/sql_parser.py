@@ -159,7 +159,7 @@ class SimpleBooleanExpression(BooleanExpression):
         return self.booleanOperator.compare(left, right)
 
     def __str__(self):
-        return '%s %s %s' % (self.leftExpression, self.booleanOperator, self.rightExpression)
+        return '(%s %s %s)' % (self.leftExpression, self.booleanOperator, self.rightExpression)
 
 
 class BooleanComparison(BooleanExpression):
@@ -175,7 +175,7 @@ class BooleanComparison(BooleanExpression):
         return self.comparisonOperator.compare(left, right)
 
     def __str__(self):
-        return '%s %s %s' % (self.leftDataExtractor, self.comparisonOperator, self.rightDataExtractor)
+        return '(%s %s %s)' % (self.leftDataExtractor, self.comparisonOperator, self.rightDataExtractor)
 
 
 class GreaterThanOrEqualsComparisonOperator(object):
@@ -328,14 +328,36 @@ class ParserActions(object):
         comparisonOperator = elements[2]
         rightDataExtractor = findExtractor(elements[4])
 
-        return BooleanComparison(leftDataExctractor[0], rightDataExtractor[0], comparisonOperator)
+        comparison = BooleanComparison(leftDataExctractor[0], rightDataExtractor[0], comparisonOperator)
+        
+        print('\ncomparison %s' % (comparison))
+        printElements(elements)
+
+        return comparison
 
     def make_simple_boolean_expression(self, input, start, end, elements):
         leftExpression = elements[0]
         booleanOperator = elements[2]
         rightExpression = elements[4]
+        expression = SimpleBooleanExpression(leftExpression, rightExpression, booleanOperator)
 
-        return SimpleBooleanExpression(leftExpression, rightExpression, booleanOperator)
+        print('\nsimple %s' % (expression))
+        printElements(elements)
+
+        return expression
+    
+    def make_complex_boolean_expression(self, input, start, end, elements):
+        
+        booleanExpressions = [element for element in elements if isinstance(element, BooleanExpression)]
+
+        # print(booleanExpressions)
+
+        expression = findBooleanExpression(elements)
+
+        print('\ncomplex %s' % (expression))
+        printElements(elements)
+
+        return expression
 
     def make_asterisk(self, input, start, end):
         return Asterisk()

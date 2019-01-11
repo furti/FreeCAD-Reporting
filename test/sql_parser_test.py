@@ -6,7 +6,7 @@ class DocumentObject(object):
         self.name = name
         self.tag = tag
         self.role = role
-    
+
     def __str__(self):
         return 'name: %s, tag: %s, role: %s' % (self.name, self.tag, self.role)
 
@@ -16,13 +16,15 @@ window = DocumentObject('Window', 'living', 'window')
 space = DocumentObject('Space', 'living', 'space')
 space001 = DocumentObject('Space001', 'bedroom', 'space')
 space002 = DocumentObject('Space002', 'bedroom', 'space')
+space003 = DocumentObject('Space003', 'something', 'space')
 
 documentObjects = [
     wall,
     window,
     space,
     space001,
-    space002
+    space002,
+    space003
 ]
 
 
@@ -42,7 +44,7 @@ def executeStatement(statementString, doPrint=True):
 
     print(statementString)
     statement = sqlParser.parse(statementString)
-    
+
     if doPrint:
         print(statement)
 
@@ -71,7 +73,8 @@ def statementShouldParseWithDifferentStyles():
 def selectAsteriskFromDocument():
     result = executeStatement('Select * From document')
 
-    assert result == [[wall], [window],  [space], [space001], [space002]]
+    assert result == [[wall], [window],  [space],
+                      [space001], [space002], [space003]]
 
 
 def selectAsteriskFromWall():
@@ -84,24 +87,42 @@ def selectNameFromDocument():
     result = executeStatement('Select name From document')
 
     assert result == [['Wall'], ['Window'], [
-        'Space'], ['Space001'], ['Space002']]
+        'Space'], ['Space001'], ['Space002'], ['Space003']]
 
 
 def selectNameAndStaticValuesFromDocument():
     result = executeStatement("Select name, 42,'literal' From document")
 
     assert result == [['Wall', 42, 'literal'], ['Window', 42, 'literal'], [
-        'Space', 42, 'literal'], ['Space001', 42, 'literal'], ['Space002', 42, 'literal']]
+        'Space', 42, 'literal'], ['Space001', 42, 'literal'], ['Space002', 42, 'literal'], ['Space003', 42, 'literal']]
+
 
 def selectWithSimpleWhereClause():
     result = executeStatement("Select * From document Where name = 'Wall'")
 
     assert result == [[wall]]
 
+
 def selectWithAndWhereClause():
-    result = executeStatement("Select * From document Where role = 'space' and tag = 'bedroom'")
+    result = executeStatement(
+        "Select * From document Where role = 'space' and tag = 'bedroom'")
 
     assert result == [[space001], [space002]]
+
+
+def selectWithOrWhereClause():
+    result = executeStatement(
+        "Select * From document Where role = 'space' or tag = 'inside'")
+
+    assert result == [[wall], [space], [space001], [space002], [space003]]
+
+
+def selectWithBracketsWhereClause():
+    result = executeStatement(
+        "Select * From document Where role = 'space' and (tag = 'living' or tag='something')")
+
+    assert result == [[space], [space003]]
+
 
 def run():
     statementShouldParseWithDifferentStyles()
@@ -111,3 +132,5 @@ def run():
     selectNameAndStaticValuesFromDocument()
     selectWithSimpleWhereClause()
     selectWithAndWhereClause()
+    selectWithOrWhereClause()
+    selectWithBracketsWhereClause()

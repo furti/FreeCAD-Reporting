@@ -21,7 +21,7 @@ grammar sql
     # Boolean Start
     BooleanExpression <- BooleanComparison __ BooleanOperator __ BooleanExpression %make_simple_boolean_expression
         / BooleanComparison
-        / "(" _ BooleanExpression _ ")" (__ BooleanOperator __ BooleanExpression)*
+        / "(" _ BooleanExpression _ ")" (__ BooleanOperator __ BooleanExpression)* %make_complex_boolean_expression
     
     BooleanComparison <- Operand _ ComparisonOperator _ Operand %make_boolean_comparison
 
