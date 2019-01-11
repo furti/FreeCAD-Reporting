@@ -2,16 +2,53 @@
 
 grammar sql
 
-    Statement <- `Select` __
+    Statement <- `Select` __ Columns __
         FromClause
-        Semicolon %make_statement
+        WhereClause?
+        Semicolon? %make_statement
 
+    # Clauses Start
     FromClause <- `From` __ Reference %prepare_from_clause
 
-    Semicolon <- _ ";"
+    WhereClause <- __ `Where` __ BooleanExpression %prepare_where_clause
+
+    Columns <- (Column (_ "," _ Column)*) %prepare_columns
+
+    Column <- Asterisk / Operand
+    
+    # Clauses End
+
+    # Boolean Start
+    BooleanExpression <- BooleanComparison __ BooleanOperator __ BooleanExpression
+        / BooleanComparison
+        / "(" _ BooleanExpression _ ")" (__ BooleanOperator __ BooleanExpression)*
+    
+    BooleanComparison <- Operand _ ComparisonOperator _ Operand %make_boolean_comparison
+
+    BooleanOperator <- `And` %make_boolean_operator_and 
+        / `Or` %make_boolean_operator_or
+
+    ComparisonOperator <- ">=" %make_comp_operator_gte
+        / "<=" %make_comp_operator_lte
+        / "!=" %make_comp_operator_neq
+        / "=" %make_comp_operator_eq
+        / ">" %make_comp_operator_gt
+        / "<" %make_comp_operator_lt
+
+    # Boolean End
+
+    Operand <- Number / Literal / Reference
 
     # Basics
     Reference <- [a-zA-Z0-9]+ %make_reference
+
+    Literal <- "'" (!"'" .)* "'" %make_literal
+
+    Number <- [0-9]+ %make_number
+
+    Asterisk <- "*" %make_asterisk
+    
+    Semicolon <- _ ";"
 
     # optional whitespace
     _ <- [ \t\r\n]*
