@@ -281,6 +281,9 @@ class SumFunctionOperator(FunctionOperator):
     def execute(self, left, right):
         if left is None:
             return right
+        
+        if right is None:
+            return left
 
         return left + right
 
@@ -292,6 +295,9 @@ class CountFunctionOperator(FunctionOperator):
     def execute(self, left, right):
         if left is None:
             return 1
+        
+        if right is None:
+            return left
 
         return left + 1
 
@@ -303,6 +309,9 @@ class MinFunctionOperator(FunctionOperator):
     def execute(self, left, right):
         if left is None:
             return right
+        
+        if right is None:
+            return left
 
         if left < right:
             return left
@@ -317,6 +326,9 @@ class MaxFunctionOperator(FunctionOperator):
     def execute(self, left, right):
         if left is None:
             return right
+        
+        if right is None:
+            return left
 
         if left > right:
             return left
