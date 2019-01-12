@@ -1,9 +1,16 @@
 from . import sql_grammar
 
 
-def printElements(elements):
+def printElements(elements, intent=''):
     for element in elements:
-        print(element)
+        if(hasattr(element, 'text')):
+            print('%s{"%s" (%s)}'%(intent, element.text, element))
+        else:
+            print('%s{%s}'%(intent, element))
+
+
+        if(hasattr(element, 'elements')):
+            printElements(element.elements, intent + '  ')
 
 
 class SelectStatement(object):
@@ -113,7 +120,10 @@ class StaticExtractor(object):
         return self.value
 
     def __str__(self):
-        return '$%s' % (self.value)
+        if isinstance(self.value, str):
+            return "'%s'" % (self.value)
+        else:
+            return '%s' % (self.value)
 
 
 class ReferenceExtractor(object):
@@ -427,8 +437,8 @@ class ParserActions(object):
         comparison = BooleanComparison(
             leftDataExctractor[0], rightDataExtractor[0], comparisonOperator)
 
-        print('\ncomparison %s' % (comparison))
-        printElements(elements)
+        # print('\ncomparison %s' % (comparison))
+        # printElements(elements)
 
         return comparison
 
@@ -439,22 +449,24 @@ class ParserActions(object):
         expression = SimpleBooleanExpression(
             leftExpression, rightExpression, booleanOperator)
 
-        print('\nsimple %s' % (expression))
-        printElements(elements)
-
         return expression
 
     def make_complex_boolean_expression(self, input, start, end, elements):
+        firstExpression = elements[2]
+        lastElement = elements[-1]
 
-        booleanExpressions = [
-            element for element in elements if isinstance(element, BooleanExpression)]
+        # No additional expression found
+        if lastElement.text == '':
+            return firstExpression
 
-        # print(booleanExpressions)
-
-        expression = findBooleanExpression(elements)
-
-        print('\ncomplex %s' % (expression))
-        printElements(elements)
+        # Otherwise build a expression from the first expression and the additional expression        
+        additionalExpressionElements = lastElement.elements[0].elements
+        
+        booleanOperator = additionalExpressionElements[1]
+        rightExpression = additionalExpressionElements[3]
+        
+        expression = SimpleBooleanExpression(
+            firstExpression, rightExpression, booleanOperator)
 
         return expression
 

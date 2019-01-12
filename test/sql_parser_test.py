@@ -124,6 +124,12 @@ def selectWithBracketsWhereClause():
 
     assert result == [[space], [space003]]
 
+def selectWithBracketsWhereClauseReversed():
+    result = executeStatement(
+        "Select * From document Where (tag = 'living' or tag='something') and role = 'space'")
+
+    assert result == [[space], [space003]]
+
 def selectWithSumFunction():
     result = executeStatement(
         "Select Sum(num) From document")
@@ -158,6 +164,7 @@ def run():
     selectWithAndWhereClause()
     selectWithOrWhereClause()
     selectWithBracketsWhereClause()
+    selectWithBracketsWhereClauseReversed()
     selectWithSumFunction()
     selectWithCountFunction()
     selectWithMinFunction()
