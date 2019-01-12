@@ -4,10 +4,9 @@ from . import sql_grammar
 def printElements(elements, intent=''):
     for element in elements:
         if(hasattr(element, 'text')):
-            print('%s{"%s" (%s)}'%(intent, element.text, element))
+            print('%s{"%s" (%s)}' % (intent, element.text, element))
         else:
-            print('%s{%s}'%(intent, element))
-
+            print('%s{%s}' % (intent, element))
 
         if(hasattr(element, 'elements')):
             printElements(element.elements, intent + '  ')
@@ -22,6 +21,8 @@ class SelectStatement(object):
         self.whereClause = None
 
     def execute(self):
+        self.resetState()
+
         objectList = self.getObjectList()
 
         result = self.columns.execute(objectList)
@@ -36,6 +37,9 @@ class SelectStatement(object):
             return objectList
         else:
             return [o for o in objectList if self.whereClause.matches(o)]
+
+    def resetState(self):
+        self.columns.resetState()
 
     def __str__(self):
         return 'Select %s %s %s' % (self.columns, self.fromClause, self.whereClause)
@@ -54,8 +58,13 @@ class Columns(object):
 
         if self.grouping:
             return [result[-1]]
-        
+
         return result
+
+    def resetState(self):
+        if self.grouping:
+            for column in self.columns:
+                column.resetState()
 
     def __str__(self):
         return '%s' % [column.__str__() for column in self.columns]
@@ -69,6 +78,10 @@ class Column(object):
 
     def execute(self, o):
         return self.dataExtractor.extract(o)
+
+    def resetState(self):
+        if self.grouping:
+            self.dataExtractor.resetState()
 
     def __str__(self):
         return '%s:%s' % (self.columnName, self.dataExtractor)
@@ -108,6 +121,9 @@ class IdentityExtractor(object):
     def extract(self, o):
         return o
 
+    def resetState(self):
+        pass
+
     def __str__(self):
         return '$identity'
 
@@ -118,6 +134,9 @@ class StaticExtractor(object):
 
     def extract(self, o):
         return self.value
+
+    def resetState(self):
+        pass
 
     def __str__(self):
         if isinstance(self.value, str):
@@ -133,6 +152,9 @@ class ReferenceExtractor(object):
     def extract(self, o):
         return self.ref.getValue(o)
 
+    def resetState(self):
+        pass
+
     def __str__(self):
         return self.ref.__str__()
 
@@ -146,9 +168,12 @@ class CalculationExtractor(object):
         self.currentValue = self.calculation.execute(o, self.currentValue)
 
         return self.currentValue
-    
+
+    def resetState(self):
+        self.currentValue = None
+
     def __str__(self):
-        return '%s'%(self.calculation)
+        return '%s' % (self.calculation)
 
 
 class Reference(object):
@@ -156,7 +181,10 @@ class Reference(object):
         self.value = value
 
     def getValue(self, o):
-        return getattr(o, self.value)
+        if hasattr(o, self.value):
+            return getattr(o, self.value)
+
+        return None
 
     def __str__(self):
         return '$%s' % self.value
@@ -281,7 +309,7 @@ class SumFunctionOperator(FunctionOperator):
     def execute(self, left, right):
         if left is None:
             return right
-        
+
         if right is None:
             return left
 
@@ -295,7 +323,7 @@ class CountFunctionOperator(FunctionOperator):
     def execute(self, left, right):
         if left is None:
             return 1
-        
+
         if right is None:
             return left
 
@@ -309,7 +337,7 @@ class MinFunctionOperator(FunctionOperator):
     def execute(self, left, right):
         if left is None:
             return right
-        
+
         if right is None:
             return left
 
@@ -326,7 +354,7 @@ class MaxFunctionOperator(FunctionOperator):
     def execute(self, left, right):
         if left is None:
             return right
-        
+
         if right is None:
             return left
 
@@ -349,9 +377,9 @@ class Calculation(object):
         value = self.dataExtractor.extract(o)
 
         return self.operator.execute(currentValue, value)
-    
+
     def __str__(self):
-        return '%s(%s)'%(self.operator, self.dataExtractor)
+        return '%s(%s)' % (self.operator, self.dataExtractor)
 # Functions End
 
 
@@ -449,9 +477,6 @@ class ParserActions(object):
         comparison = BooleanComparison(
             leftDataExctractor[0], rightDataExtractor[0], comparisonOperator)
 
-        # print('\ncomparison %s' % (comparison))
-        # printElements(elements)
-
         return comparison
 
     def make_simple_boolean_expression(self, input, start, end, elements):
@@ -471,12 +496,12 @@ class ParserActions(object):
         if lastElement.text == '':
             return firstExpression
 
-        # Otherwise build a expression from the first expression and the additional expression        
+        # Otherwise build a expression from the first expression and the additional expression
         additionalExpressionElements = lastElement.elements[0].elements
-        
+
         booleanOperator = additionalExpressionElements[1]
         rightExpression = additionalExpressionElements[3]
-        
+
         expression = SimpleBooleanExpression(
             firstExpression, rightExpression, booleanOperator)
 
@@ -529,7 +554,7 @@ class ParserActions(object):
 
     def make_calculation(self, input, start, end, elements):
         operator = findFunctionOperator(elements)
-        
+
         for element in elements:
             extractor = findExtractor(element)
 

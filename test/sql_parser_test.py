@@ -40,7 +40,7 @@ def singleObjectSupplier(objectName):
 sqlParser = sql_parser.newParser(documentObjectsSupplier, singleObjectSupplier)
 
 
-def executeStatement(statementString, doPrint=True):
+def executeStatement(statementString, doPrint=True, includeStatement=False):
     print('--------------------------------')
 
     print(statementString)
@@ -55,7 +55,10 @@ def executeStatement(statementString, doPrint=True):
         for columns in result:
             print([element.__str__() for element in columns])
 
-    return result
+    if includeStatement:
+        return (result, statement)
+    else:
+        return result
 
 # Test Cases
 
@@ -154,6 +157,25 @@ def selectWithMaxFunction():
 
     assert result == [[6]]
 
+def selectWithUnknownPropertyShouldIgnoreObject():
+    result = executeStatement(
+        "Select * From document Where unkown = 'bedroom'")
+
+    assert result == []
+
+def selectStateShouldBeResetBetweenCalls():
+    result, statement = executeStatement(
+        "Select Count(*) From document Where role = 'space'", includeStatement=True)
+
+    assert result == [[4]]
+
+    result = statement.execute()
+
+    print(result)
+
+    assert result == [[4]]
+
+
 def run():
     statementShouldParseWithDifferentStyles()
     selectAsteriskFromDocument()
@@ -169,3 +191,5 @@ def run():
     selectWithCountFunction()
     selectWithMinFunction()
     selectWithMaxFunction()
+    selectWithUnknownPropertyShouldIgnoreObject()
+    selectStateShouldBeResetBetweenCalls()
