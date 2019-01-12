@@ -14,13 +14,12 @@ class ReportingWorkbench (FreeCADGui.Workbench):
         pass
 
     def Initialize(self):
-        pass
-        # # Initialize the module
-        # import archtexture_toolbars
+        # Initialize the module
+        import reporting_toolbars
 
-        # for name, commands in archtexture_toolbars.toolbarManager.Toolbars.items():
-        #     self.appendToolbar(
-        #         name, [command.commandName for command in commands])
+        for name, commands in reporting_toolbars.toolbarManager.Toolbars.items():
+            self.appendToolbar(
+                name, [command.commandName for command in commands])
 
 #    def Activated(self):
 
