@@ -1,5 +1,82 @@
 import FreeCAD
+import FreeCADGui
 from pivy import coin
+from report_utils.resource_utils import uiPath
+
+from PySide2.QtWidgets import QTableWidgetItem, QTextEdit
+
+
+class ReportConfigTable():
+    def __init__(self, report, qtTable):
+        self.report = report
+        self.qtTable = qtTable
+
+        # self.qtTable.itemDoubleClicked.connect(self.doubleClicked)
+
+        self.setupTable()
+
+    def setupTable(self):
+        for statement in self.report.statements:
+            self.addRow(statement.header, statement.plainTextStatement)
+
+    def addRow(self, header=None, statement=None):
+        rowPosition = self.qtTable.rowCount()
+        self.qtTable.insertRow(rowPosition)
+
+        headerEdit = QTableWidgetItem(header)
+        statementEdit = QTextEdit(statement)
+
+        self.qtTable.setItem(rowPosition, 0, headerEdit)
+        self.qtTable.setCellWidget(rowPosition, 1, statementEdit)
+
+    def removeRow(self):
+        selectionModel = self.qtTable.selectionModel()
+
+        if selectionModel.hasSelection():
+            for selection in selectionModel.selectedRows():
+                self.qtTable.removeRow(selection.row())
+
+    def saveIntoConfig(self):
+        self.report.statements.clear()
+
+        for row in range(self.qtTable.rowCount()):
+            headerEdit = self.qtTable.item(row, 0)
+            statementEdit = self.qtTable.cellWidget(row, 1)
+
+            reportStatement = ReportStatement(headerEdit.text(), statementEdit.toPlainText())
+
+            self.report.statements.append(reportStatement)
+
+
+class ReportConfigPanel():
+    def __init__(self, report, freecadObject):
+        self.report = report
+        self.freecadObject = freecadObject
+
+        self.form = FreeCADGui.PySideUic.loadUi(uiPath('report_config.ui'))
+
+        self.reportConfigTable = ReportConfigTable(
+            self.report, self.form.ReportTable)
+        self.form.AddStatementButton.clicked.connect(
+            self.reportConfigTable.addRow)
+        self.form.RemoveStatementButton.clicked.connect(
+            self.reportConfigTable.removeRow)
+
+    def accept(self):
+        self.reportConfigTable.saveIntoConfig()
+
+        FreeCADGui.Control.closeDialog()
+
+        self.report.execute(self.freecadObject)
+
+    def reject(self):
+        FreeCADGui.Control.closeDialog()
+
+
+class ReportStatement(object):
+    def __init__(self, header, plainTextStatement):
+        self.header = header
+        self.plainTextStatement = plainTextStatement
 
 
 class Report():
@@ -11,6 +88,10 @@ class Report():
 
         obj.addProperty("App::PropertyLink", "Result", "Settings",
                         "The spreadsheet to print the results to")
+
+        self.statements = [
+            # ReportStatement, ...
+        ]
 
     def execute(self, fp):
         if fp.SkipComputing:
@@ -45,7 +126,7 @@ class ViewProviderReport():
     def attach(self, vobj):
         self.ViewObject = vobj
         self.Object = vobj.Object
-        self.textureConfig = self.Object.Proxy
+        self.report = self.Object.Proxy
 
         self.coinNode = coin.SoGroup()
         vobj.addDisplayMode(self.coinNode, "Standard")
@@ -58,9 +139,8 @@ class ViewProviderReport():
 
     def setEdit(self, vobj, mode):
         if mode == 0:
-            print('edit')
-        #     panel = TextureConfigPanel(self.textureConfig, self.Object)
-        #     FreeCADGui.Control.showDialog(panel)
+            panel = ReportConfigPanel(self.report, self.Object)
+            FreeCADGui.Control.showDialog(panel)
 
             return True
 
