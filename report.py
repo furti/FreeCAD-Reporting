@@ -1,17 +1,41 @@
 import FreeCAD
 import FreeCADGui
+import string
 from pivy import coin
 from report_utils.resource_utils import uiPath
+from sql import freecad_sql_parser
 
 from PySide2.QtWidgets import QTableWidgetItem, QTextEdit
+
+SQL_PARSER = freecad_sql_parser.newParser()
+
+COLUMN_NAMES = list(string.ascii_uppercase)
+
+
+def nextColumnName(actualColumnName):
+    if actualColumnName is None:
+        return COLUMN_NAMES[0]
+
+    nextIndex = COLUMN_NAMES.index(actualColumnName) + 1
+
+    if nextIndex >= len(COLUMN_NAMES):
+        nextIndex -= len(COLUMN_NAMES)
+
+    return COLUMN_NAMES[nextIndex]
+
+
+def lineRange(startColumn, endColumn, lineNumber):
+    return '%s%s:%s%s' % (startColumn, lineNumber, endColumn, lineNumber)
+
+
+def literalText(text):
+    return "'%s" % (text)
 
 
 class ReportConfigTable():
     def __init__(self, report, qtTable):
         self.report = report
         self.qtTable = qtTable
-
-        # self.qtTable.itemDoubleClicked.connect(self.doubleClicked)
 
         self.setupTable()
 
@@ -43,7 +67,8 @@ class ReportConfigTable():
             headerEdit = self.qtTable.item(row, 0)
             statementEdit = self.qtTable.cellWidget(row, 1)
 
-            reportStatement = ReportStatement(headerEdit.text(), statementEdit.toPlainText())
+            reportStatement = ReportStatement(
+                headerEdit.text(), statementEdit.toPlainText())
 
             self.report.statements.append(reportStatement)
 
@@ -77,14 +102,21 @@ class ReportStatement(object):
     def __init__(self, header, plainTextStatement):
         self.header = header
         self.plainTextStatement = plainTextStatement
+        self.statement = SQL_PARSER.parse(plainTextStatement)
+
+    def execute(self):
+        return self.statement.exeucte()
+
+    def getColumnNames(self):
+        return self.statement.getColumnNames()
 
 
 class Report():
     def __init__(self, obj, fileObject=None):
         obj.Proxy = self
 
-        obj.addProperty("App::PropertyBool", "SkipComputing", "Settings",
-                        "When true no calculation of this report is performed, even when the document gets recomputed").SkipComputing = False
+        # obj.addProperty("App::PropertyBool", "SkipComputing", "Settings",
+        #                 "When true no calculation of this report is performed, even when the document gets recomputed").SkipComputing = False
 
         obj.addProperty("App::PropertyLink", "Result", "Settings",
                         "The spreadsheet to print the results to")
@@ -94,23 +126,63 @@ class Report():
         ]
 
     def execute(self, fp):
-        if fp.SkipComputing:
-            return
+        # if fp.SkipComputing:
+        #     return
 
         if not fp.Result:
             FreeCAD.Console.PrintError(
                 'No spreadsheet attached to %s. Could not recompute result' % (fp.Label))
 
         spreadsheet = fp.Result
-
         spreadsheet.clearAll()
 
-        spreadsheet.set("A1", "Test")
-        spreadsheet.set("B1", "More")
+        lineNumber = 1
 
-        spreadsheet.setStyle('A1:B1', 'bold', 'add')
+        for statement in self.statements:
+            columnNames = statement.getColumnNames()
+
+            lineNumber = self.printHeader(
+                fp, statement.header, lineNumber, len(columnNames))
+            lineNumber = self.printColumnLabels(fp, columnNames, lineNumber)
 
         spreadsheet.recompute()
+
+    def printHeader(self, fp, header, lineNumber, numberOfColumns):
+        spreadsheet = fp.Result
+
+        if header is None:
+            return lineNumber
+
+        headerCell = 'A%s' % (lineNumber)
+
+        spreadsheet.set(headerCell, literalText(header))
+        spreadsheet.setStyle(headerCell, 'bold|underline', 'add')
+
+        if numberOfColumns > 1:
+            lastColumnCell = COLUMN_NAMES[numberOfColumns - 1]
+
+            spreadsheet.mergeCells(lineRange('A', lastColumnCell, lineNumber))
+
+        return lineNumber + 1
+
+    def printColumnLabels(self, fp, columnLabels, lineNumber):
+        spreadsheet = fp.Result
+
+        columnName = None
+
+        for columnLabel in columnLabels:
+            columnName = nextColumnName(columnName)
+
+            cellName = '%s%s' % (columnName, lineNumber)
+
+            print('%s %s' % (cellName, columnLabel))
+
+            spreadsheet.set(cellName, literalText(columnLabel))
+
+        spreadsheet.setStyle(
+            lineRange('A', columnName, lineNumber), 'bold', 'add')
+
+        return lineNumber + 1
 
     def __getstate__(self):
         return None
