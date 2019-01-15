@@ -127,11 +127,13 @@ def selectWithBracketsWhereClause():
 
     assert result == [[space], [space003]]
 
+
 def selectWithBracketsWhereClauseReversed():
     result = executeStatement(
         "Select * From document Where (tag = 'living' or tag='something') and role = 'space'")
 
     assert result == [[space], [space003]]
+
 
 def selectWithSumFunction():
     result = executeStatement(
@@ -139,11 +141,13 @@ def selectWithSumFunction():
 
     assert result == [[21]]
 
+
 def selectWithCountFunction():
     result = executeStatement(
         "Select Count(*) From document Where role = 'space'")
 
     assert result == [[4]]
+
 
 def selectWithMinFunction():
     result = executeStatement(
@@ -151,17 +155,20 @@ def selectWithMinFunction():
 
     assert result == [[1]]
 
+
 def selectWithMaxFunction():
     result = executeStatement(
         "Select Max(num) From document")
 
     assert result == [[6]]
 
+
 def selectWithUnknownPropertyShouldIgnoreObject():
     result = executeStatement(
         "Select * From document Where unkown = 'bedroom'")
 
     assert result == []
+
 
 def selectStateShouldBeResetBetweenCalls():
     result, statement = executeStatement(
@@ -174,6 +181,17 @@ def selectStateShouldBeResetBetweenCalls():
     print(result)
 
     assert result == [[4]]
+
+
+def columnNamesShouldBeCorrect():
+    result, statement = executeStatement(
+        "Select name, 42,'literal' From document", includeStatement=True)
+
+    columnNames = statement.getColumnNames()
+
+    print(columnNames)
+
+    assert columnNames == ['name', '42', 'literal']
 
 
 def run():
@@ -193,3 +211,4 @@ def run():
     selectWithMaxFunction()
     selectWithUnknownPropertyShouldIgnoreObject()
     selectStateShouldBeResetBetweenCalls()
+    columnNamesShouldBeCorrect()

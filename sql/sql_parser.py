@@ -29,6 +29,9 @@ class SelectStatement(object):
 
         return result
 
+    def getColumnNames(self):
+        return self.columns.getNames()
+
     def getObjectList(self):
         objectList = self.fromClause.getObjects(
             self.documentObjectsSupplier, self.singleObjectSupplier)
@@ -60,6 +63,9 @@ class Columns(object):
             return [result[-1]]
 
         return result
+
+    def getNames(self):
+        return [column.columnName for column in self.columns]
 
     def resetState(self):
         if self.grouping:
