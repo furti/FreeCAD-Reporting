@@ -7,11 +7,35 @@ I was working on an personal Architecture Project. After there where a lot of wa
 
 ## Getting started
 
-A good advice right at the beginning: Apply textures only **after** you finished modelling your geometry. Otherwise it might be easily possible that you break your texture mapping later on and have to do it again.
+<details>
+<summary>
+
+This section gives you a step by step introduction on how to get startet with the workbench. It will guide you through the process of creating a simple report to extract some data out of a FreeCAD Document.
+
+more...
+</summary>
+    
+    comming soon...
+</details>
+
+## Getting started
 
 <details>
 <summary>
-comming soon...
+
+This section gives you a step by step introduction on how to get startet with the sql module in python.
+
+more...
+</summary>
+    
+    comming soon...
+</details>
+
+## SQL Reference
+
+<details>
+<summary>
+Check out this section when you want to know something about SQL and what features are supported by this Workbench.
 
 more...
 </summary>
