@@ -1,6 +1,8 @@
 import FreeCAD
 import FreeCADGui
 import string
+
+from FreeCAD import Units
 from pivy import coin
 from report_utils.resource_utils import uiPath
 from sql import freecad_sql_parser
@@ -28,8 +30,89 @@ def lineRange(startColumn, endColumn, lineNumber):
     return '%s%s:%s%s' % (startColumn, lineNumber, endColumn, lineNumber)
 
 
+def buildCellName(columnName, lineNumber):
+    return '%s%s' % (columnName, lineNumber)
+
+
 def literalText(text):
     return "'%s" % (text)
+
+
+class ReportSpreadsheet(object):
+    def __init__(self, spreadsheet):
+        self.spreadsheet = spreadsheet
+        self.lineNumber = 1
+
+    def clearAll(self):
+        self.spreadsheet.clearAll()
+
+    def printHeader(self, header, numberOfColumns):
+        spreadsheet = self.spreadsheet
+
+        if header is None:
+            return
+
+        headerCell = 'A%s' % (self.lineNumber)
+
+        print('%s %s' % (headerCell, header))
+
+        spreadsheet.set(headerCell, literalText(header))
+        spreadsheet.setStyle(headerCell, 'bold|underline', 'add')
+
+        if numberOfColumns > 1:
+            lastColumnCell = COLUMN_NAMES[numberOfColumns - 1]
+
+            spreadsheet.mergeCells(
+                lineRange('A', lastColumnCell, self.lineNumber))
+
+        self.lineNumber += 1
+
+    def printColumnLabels(self, columnLabels):
+        spreadsheet = self.spreadsheet
+
+        columnName = None
+
+        for columnLabel in columnLabels:
+            columnName = nextColumnName(columnName)
+            cellName = buildCellName(columnName, self.lineNumber)
+
+            spreadsheet.set(cellName, literalText(columnLabel))
+
+        spreadsheet.setStyle(
+            lineRange('A', columnName, self.lineNumber), 'bold', 'add')
+
+        self.lineNumber += 1
+
+    def printRows(self, rows):
+        for row in rows:
+            columnName = None
+
+            for column in row:
+                columnName = nextColumnName(columnName)
+                cellName = buildCellName(columnName, self.lineNumber)
+
+                self.setCellValue(cellName, column)
+
+            self.lineNumber += 1
+
+        self.lineNumber += 2
+
+    def setCellValue(self, cell, value):
+        if value is None:
+            convertedValue = ''
+        elif isinstance(value, Units.Quantity):
+            convertedValue = value.UserString
+        else:
+            convertedValue = str(value)
+
+        convertedValue = literalText(convertedValue)
+
+        print('%s %s' % (cell, convertedValue))
+
+        self.spreadsheet.set(cell, convertedValue)
+
+    def recompute(self):
+        self.spreadsheet.recompute()
 
 
 class ReportConfigTable():
@@ -105,7 +188,7 @@ class ReportStatement(object):
         self.statement = SQL_PARSER.parse(plainTextStatement)
 
     def execute(self):
-        return self.statement.exeucte()
+        return self.statement.execute()
 
     def getColumnNames(self):
         return self.statement.getColumnNames()
@@ -133,7 +216,7 @@ class Report():
             FreeCAD.Console.PrintError(
                 'No spreadsheet attached to %s. Could not recompute result' % (fp.Label))
 
-        spreadsheet = fp.Result
+        spreadsheet = ReportSpreadsheet(fp.Result)
         spreadsheet.clearAll()
 
         lineNumber = 1
@@ -141,48 +224,15 @@ class Report():
         for statement in self.statements:
             columnNames = statement.getColumnNames()
 
-            lineNumber = self.printHeader(
-                fp, statement.header, lineNumber, len(columnNames))
-            lineNumber = self.printColumnLabels(fp, columnNames, lineNumber)
+            spreadsheet.printHeader(statement.header, len(columnNames))
+
+            spreadsheet.printColumnLabels(columnNames)
+
+            rows = statement.execute()
+
+            spreadsheet.printRows(rows)
 
         spreadsheet.recompute()
-
-    def printHeader(self, fp, header, lineNumber, numberOfColumns):
-        spreadsheet = fp.Result
-
-        if header is None:
-            return lineNumber
-
-        headerCell = 'A%s' % (lineNumber)
-
-        spreadsheet.set(headerCell, literalText(header))
-        spreadsheet.setStyle(headerCell, 'bold|underline', 'add')
-
-        if numberOfColumns > 1:
-            lastColumnCell = COLUMN_NAMES[numberOfColumns - 1]
-
-            spreadsheet.mergeCells(lineRange('A', lastColumnCell, lineNumber))
-
-        return lineNumber + 1
-
-    def printColumnLabels(self, fp, columnLabels, lineNumber):
-        spreadsheet = fp.Result
-
-        columnName = None
-
-        for columnLabel in columnLabels:
-            columnName = nextColumnName(columnName)
-
-            cellName = '%s%s' % (columnName, lineNumber)
-
-            print('%s %s' % (cellName, columnLabel))
-
-            spreadsheet.set(cellName, literalText(columnLabel))
-
-        spreadsheet.setStyle(
-            lineRange('A', columnName, lineNumber), 'bold', 'add')
-
-        return lineNumber + 1
 
     def __getstate__(self):
         return None
