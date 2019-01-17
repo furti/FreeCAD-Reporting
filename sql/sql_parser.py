@@ -12,6 +12,11 @@ def printElements(elements, intent=''):
             printElements(element.elements, intent + '  ')
 
 
+class SqlStatementValidationError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+
+
 class SelectStatement(object):
     def __init__(self):
         self.documentObjectsSupplier = None
@@ -19,6 +24,15 @@ class SelectStatement(object):
         self.columns = None
         self.fromClause = None
         self.whereClause = None
+
+    def validate(self):
+        if self.columns is None:
+            raise SqlStatementValidationError('No columns defined')
+
+        if self.fromClause is None:
+            raise SqlStatementValidationError('No fromClause defined')
+
+        self.columns.validate()
 
     def execute(self):
         self.resetState()
@@ -52,6 +66,20 @@ class Columns(object):
     def __init__(self, columns):
         self.columns = columns
         self.grouping = columns[0].grouping
+
+    def validate(self):
+        groupingFound = False
+        nonGroupingFound = False
+
+        for column in self.columns:
+            if column.grouping:
+                groupingFound = True
+            else:
+                nonGroupingFound = True
+
+        if groupingFound and nonGroupingFound:
+            raise SqlStatementValidationError(
+                'Can not mix functions and non functions in select clause')
 
     def execute(self, objectList):
         result = []
@@ -584,6 +612,8 @@ class SqlParser(object):
 
         sqlStatement.documentObjectsSupplier = self.documentObjectsSupplier
         sqlStatement.singleObjectSupplier = self.singleObjectSupplier
+
+        sqlStatement.validate()
 
         return sqlStatement
 
