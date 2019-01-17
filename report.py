@@ -193,6 +193,14 @@ class ReportStatement(object):
     def getColumnNames(self):
         return self.statement.getColumnNames()
 
+    def serializeState(self):
+        return [self.header, self.plainTextStatement]
+
+    @staticmethod
+    def deserializeState(state):
+
+        return ReportStatement(state[0], state[1])
+
 
 class Report():
     def __init__(self, obj, fileObject=None):
@@ -235,9 +243,12 @@ class Report():
         spreadsheet.recompute()
 
     def __getstate__(self):
-        return None
+        return [statement.serializeState() for statement in self.statements]
 
     def __setstate__(self, state):
+        self.statements = [ReportStatement.deserializeState(
+            serializedState) for serializedState in state]
+
         return None
 
 
