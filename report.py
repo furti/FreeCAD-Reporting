@@ -13,6 +13,8 @@ SQL_PARSER = freecad_sql_parser.newParser()
 
 COLUMN_NAMES = list(string.ascii_uppercase)
 
+DEBUG = True
+
 
 def nextColumnName(actualColumnName):
     if actualColumnName is None:
@@ -54,9 +56,7 @@ class ReportSpreadsheet(object):
 
         headerCell = 'A%s' % (self.lineNumber)
 
-        print('%s %s' % (headerCell, header))
-
-        spreadsheet.set(headerCell, literalText(header))
+        self.setCellValue(headerCell, header)
         spreadsheet.setStyle(headerCell, 'bold|underline', 'add')
 
         if numberOfColumns > 1:
@@ -76,7 +76,7 @@ class ReportSpreadsheet(object):
             columnName = nextColumnName(columnName)
             cellName = buildCellName(columnName, self.lineNumber)
 
-            spreadsheet.set(cellName, literalText(columnLabel))
+            self.setCellValue(cellName, columnLabel)
 
         spreadsheet.setStyle(
             lineRange('A', columnName, self.lineNumber), 'bold', 'add')
@@ -107,7 +107,8 @@ class ReportSpreadsheet(object):
 
         convertedValue = literalText(convertedValue)
 
-        print('%s %s' % (cell, convertedValue))
+        if DEBUG:
+            print('set %s to %s for %s' % (cell, convertedValue, self.spreadsheet))
 
         self.spreadsheet.set(cell, convertedValue)
 
@@ -186,6 +187,10 @@ class ReportStatement(object):
         self.header = header
         self.plainTextStatement = plainTextStatement
         self.statement = SQL_PARSER.parse(plainTextStatement)
+
+        if DEBUG:
+            print('parsed statement %s' % (plainTextStatement))
+            print('to %s' % (self.statement))
 
     def execute(self):
         return self.statement.execute()
