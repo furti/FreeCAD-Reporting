@@ -104,8 +104,90 @@ Check out this section when you want to know something about SQL and what featur
 
 more...
 </summary>
-    
-    comming soon...
+SQL (Structured Query Language) is a language that is normally used to manage and retrieve data from databases. But with this workbench, we can use it to select data from FreeCAD documents.
+
+A Select statement basically looks like this
+
+```sql
+Select <Columns>
+From <Source>
+Where <Expression>
+Group By <GroupingColumns>
+```
+
+```Select``` and ```From``` clauses are mandatory, ```Where``` and ```Group By``` are optional.
+
+### Select \<Columns>
+
+Columns is a comma separated list of attributes you want in the result.
+
+```sql
+Select Attribute1, Attribute2, 'sometext', sum(Attribute3)
+From document
+```
+
+You can use ```*``` as a special property in the select clause, to retrieve the whole object instead of a single property. This might be expecially useful when you want to perform certain operations on some objects in python. You can select them with a select statement, and process them afterwards.
+
+You can also use functions to aggregate data for a given attribute. Supported functions are
+ - **Sum**: Calculates the Sum of the given attribute
+ - **Count**: Counts all not ```None``` attributes. You might want to use ```Count(*)``` to get the number of selected objects
+ - **Min**: Gets the minimum Value of the given Attribute
+ - **Max**: Gets the maximum Value of the given Attribute
+
+Without a group by clause, it is not possible to mix single attributes and functions in a select statement. Only a single row will be returned for such a query. See ```Group by``` for more details on mixing attributes and functions.
+
+
+### From \<Source>
+
+The objects from the document you want to select.
+
+**document** is a special keyword, that selects all objects in the active document. This is the only supported source right now.
+
+### Where \<Expression>
+
+The where clause can be used to filter the objects in the From clause.
+
+```sql
+Select *
+From document
+Where IfcRole = 'Space' AND (Label = 'UF_Cooridor' OR Label = 'GF_Corridor')
+```
+
+Normally you want to compare Attributes for some given values. A comparison is written in the form ```Left ComparisonOperator Right``` Where ```Left``` and ```Right``` can either be Attributes or static values. You can use the following comparison operators:
+ - **=**: Checks if the left value is equals to the right value
+ - **!=**: Checks if the left value is not equals to the right value
+ - **>**: Checks if the left value is greater than the right value
+ - **<**: Checks if the left value is less than the right value
+ - **>=**: Checks if the left value is greater than or equals to the right value
+ - **<=**: Checks if the left value is less than or equals to the right value
+
+To combine multiple comparisons you can use the ```AND``` and ```OR``` keywords. You can also use Brackets ```(``` ```)``` to build complex expressions.
+
+### Group By \<GroupingColumns>
+
+The Group by clause can be used to group objects by given attributes. We saw this before. It is not possible to mix attributes and functions without a group by clause.
+
+```sql
+Select Tag, Sum(Area)
+From document
+Where IfcRole = 'Space'
+Group By Tag
+```
+
+What does this query do? When it runs it groups all the spaces in the document by their ```Tag``` Attribute. So wen we have spaces with 3 different tags, we will get 3 rows when executing the statement. Each row will contain the Tag, and the sum of the area of all spaces for the given group.
+
+You can use multiple attributes and even static values like numbers or text in the Group By clause. But the select part can only contain single attributes, that are also referenced in the group by clause. Functions in the select clause can reference other attributes too.
+
+e.g. this would be a invalid statement
+
+```sql
+Select Label, Sum(Area)
+From document
+Group By Tag, IfcRole
+```
+
+You can not use the ```Label``` Attribute in the select clause, because it is not referenced in the group by clause.
+
 </details>
 
 ## Dependencies
