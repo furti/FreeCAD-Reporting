@@ -1,3 +1,4 @@
+from itertools import groupby
 from . import sql_grammar
 
 
@@ -24,6 +25,7 @@ class SelectStatement(object):
         self.columns = None
         self.fromClause = None
         self.whereClause = None
+        self.groupByClause = None
 
     def validate(self):
         if self.columns is None:
@@ -32,14 +34,23 @@ class SelectStatement(object):
         if self.fromClause is None:
             raise SqlStatementValidationError('No fromClause defined')
 
-        self.columns.validate()
+        if self.groupByClause is not None:
+            self.groupByClause.validate()
+            self.columns.validate(self.groupByClause.columns)
+        else:
+            self.columns.validate()
 
     def execute(self):
         self.resetState()
 
         objectList = self.getObjectList()
 
-        result = self.columns.execute(objectList)
+        if self.groupByClause is not None:
+            groupedList = self.groupByClause.execute(objectList)
+
+            result = self.columns.executeWithGroups(groupedList)
+        else:
+            result = self.columns.execute(objectList)
 
         return result
 
@@ -58,6 +69,9 @@ class SelectStatement(object):
     def resetState(self):
         self.columns.resetState()
 
+        if self.groupByClause is not None:
+            self.groupByClause.resetState()
+
     def __str__(self):
         return 'Select %s %s %s' % (self.columns, self.fromClause, self.whereClause)
 
@@ -65,9 +79,25 @@ class SelectStatement(object):
 class Columns(object):
     def __init__(self, columns):
         self.columns = columns
-        self.grouping = columns[0].grouping
+        self.grouping = True in [column.grouping for column in columns]
 
-    def validate(self):
+    def validate(self, groupByColumns=None):
+        if groupByColumns is None:
+            self.validateNonGrouping()
+        else:
+            self.validateGrouping(groupByColumns)
+
+    def validateGrouping(self, groupByColumns):
+        # All non grouping columns must also be in the group by clause
+        nonGroupingColumns = [
+            column for column in self.columns if not column.grouping]
+
+        for column in nonGroupingColumns:
+            if not column in groupByColumns:
+                raise SqlStatementValidationError(
+                    'Only columns from the group by clause are allowed in the select clause')
+
+    def validateNonGrouping(self):
         groupingFound = False
         nonGroupingFound = False
 
@@ -89,6 +119,28 @@ class Columns(object):
 
         if self.grouping:
             return [result[-1]]
+
+        return result
+
+    def executeWithGroups(self, groupedList):
+        result = []
+
+        for objectList in groupedList:
+            # Lets reset all function state before each group
+            self.resetState()
+
+            groupResult = [None] * len(self.columns)
+
+            for o in objectList:
+                for index, column in enumerate(self.columns):
+                    if column.grouping:
+                        groupResult[index] = column.execute(o)
+                    elif groupResult[index] is None:
+                        # It is enough to execute non grouping columns only once
+                        # They should give us the same result for each element in the group
+                        groupResult[index] = column.execute(o)
+
+            result.append(groupResult)
 
         return result
 
@@ -119,6 +171,47 @@ class Column(object):
 
     def __str__(self):
         return '%s:%s' % (self.columnName, self.dataExtractor)
+
+    def __eq__(self, obj):
+        if not isinstance(obj, Column):
+            return False
+
+        return self.dataExtractor == obj.dataExtractor
+
+
+class GroupByClause(object):
+    def __init__(self, columns):
+        self.columns = columns
+
+    def validate(self):
+        for column in self.columns:
+            if column.grouping:
+                raise SqlStatementValidationError(
+                    'Can not use functions in group by clause')
+
+            if isinstance(column.dataExtractor, IdentityExtractor):
+                raise SqlStatementValidationError(
+                    'Can not use * in group by clause')
+
+    def execute(self, objectList):
+        groups = groupby(objectList, self.extractColumns)
+
+        groupedList = []
+
+        for key, group in groups:
+            groupedList.append([o for o in group])
+
+        return groupedList
+
+    def extractColumns(self, o):
+        return [column.execute(o) for column in self.columns]
+
+    def resetState(self):
+        # Nothing to reset for now. No functions allowed in group by clause
+        pass
+
+    def __str__(self):
+        return '%s' % [column.__str__() for column in self.columns]
 
 
 class FromClause(object):
@@ -161,6 +254,9 @@ class IdentityExtractor(object):
     def __str__(self):
         return '$identity'
 
+    def __eq__(self, obj):
+        return isinstance(obj, IdentityExtractor)
+
 
 class StaticExtractor(object):
     def __init__(self, value):
@@ -178,6 +274,9 @@ class StaticExtractor(object):
         else:
             return '%s' % (self.value)
 
+    def __eq__(self, obj):
+        return isinstance(obj, StaticExtractor)
+
 
 class ReferenceExtractor(object):
     def __init__(self, ref):
@@ -191,6 +290,9 @@ class ReferenceExtractor(object):
 
     def __str__(self):
         return self.ref.__str__()
+
+    def __eq__(self, obj):
+        return isinstance(obj, ReferenceExtractor) and self.ref == obj.ref
 
 
 class CalculationExtractor(object):
@@ -222,6 +324,9 @@ class Reference(object):
 
     def __str__(self):
         return '$%s' % self.value
+
+    def __eq__(self, obj):
+        return isinstance(obj, Reference) and self.value == obj.value
 
 
 class Asterisk(object):
@@ -473,6 +578,8 @@ def prepareSelectStatement(statement, elements):
             statement.columns = element
         elif isinstance(element, WhereClause):
             statement.whereClause = element
+        elif isinstance(element, GroupByClause):
+            statement.groupByClause = element
 
 
 class ParserActions(object):
@@ -502,6 +609,11 @@ class ParserActions(object):
         booleanExpression = findBooleanExpression(elements)
 
         return WhereClause(booleanExpression)
+
+    def prepare_group_by_clause(self, input, start, end, elements):
+        columns = extractColumns(elements)
+
+        return GroupByClause(columns)
 
     def make_boolean_comparison(self, input, start, end, elements):
         leftDataExctractor = findExtractor(elements[0])

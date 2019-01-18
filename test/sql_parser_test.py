@@ -194,6 +194,25 @@ def columnNamesShouldBeCorrect():
     assert columnNames == ['name', '42', 'literal']
 
 
+def runGroupByClause():
+    result = executeStatement(
+        "Select role, count(*) From document Group By role")
+
+    assert result == [['wall', 1], ['window', 1], ['space', 4]]
+
+
+def invalidGroupByClauseShouldThrow():
+    exceptionMessage = None
+
+    try:
+        result = executeStatement(
+            "Select name, count(*) From document Group By role")
+    except sql_parser.SqlStatementValidationError as e:
+        exceptionMessage = str(e)
+
+    assert exceptionMessage == 'Only columns from the group by clause are allowed in the select clause'
+
+
 def run():
     statementShouldParseWithDifferentStyles()
     selectAsteriskFromDocument()
@@ -212,3 +231,5 @@ def run():
     selectWithUnknownPropertyShouldIgnoreObject()
     selectStateShouldBeResetBetweenCalls()
     columnNamesShouldBeCorrect()
+    runGroupByClause()
+    invalidGroupByClauseShouldThrow()

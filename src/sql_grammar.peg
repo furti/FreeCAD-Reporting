@@ -5,12 +5,15 @@ grammar sql
     Statement <- `Select` __ Columns __
         FromClause
         WhereClause?
+        GroupByClause?
         Semicolon? %make_statement
 
     # Clauses Start
     FromClause <- `From` __ Reference %prepare_from_clause
 
     WhereClause <- __ `Where` __ BooleanExpression %prepare_where_clause
+
+    GroupByClause <- __ `Group By` __ (Operand (_ "," _ Operand)* ) %prepare_group_by_clause
 
     Columns <- (Column (_ "," _ Column)*) %prepare_columns
 

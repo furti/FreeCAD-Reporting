@@ -38,58 +38,77 @@ class TreeNode3(TreeNode):
 class TreeNode4(TreeNode):
     def __init__(self, text, offset, elements):
         super(TreeNode4, self).__init__(text, offset, elements)
-        self.Column = elements[0]
+        self.__ = elements[2]
 
 
 class TreeNode5(TreeNode):
     def __init__(self, text, offset, elements):
         super(TreeNode5, self).__init__(text, offset, elements)
-        self._ = elements[2]
-        self.Column = elements[3]
+        self.Operand = elements[0]
 
 
 class TreeNode6(TreeNode):
     def __init__(self, text, offset, elements):
         super(TreeNode6, self).__init__(text, offset, elements)
+        self._ = elements[2]
+        self.Operand = elements[3]
+
+
+class TreeNode7(TreeNode):
+    def __init__(self, text, offset, elements):
+        super(TreeNode7, self).__init__(text, offset, elements)
+        self.Column = elements[0]
+
+
+class TreeNode8(TreeNode):
+    def __init__(self, text, offset, elements):
+        super(TreeNode8, self).__init__(text, offset, elements)
+        self._ = elements[2]
+        self.Column = elements[3]
+
+
+class TreeNode9(TreeNode):
+    def __init__(self, text, offset, elements):
+        super(TreeNode9, self).__init__(text, offset, elements)
         self.BooleanComparison = elements[0]
         self.__ = elements[3]
         self.BooleanOperator = elements[2]
         self.BooleanExpression = elements[4]
 
 
-class TreeNode7(TreeNode):
-    def __init__(self, text, offset, elements):
-        super(TreeNode7, self).__init__(text, offset, elements)
-        self._ = elements[3]
-        self.BooleanExpression = elements[2]
-
-
-class TreeNode8(TreeNode):
-    def __init__(self, text, offset, elements):
-        super(TreeNode8, self).__init__(text, offset, elements)
-        self.__ = elements[2]
-        self.BooleanOperator = elements[1]
-        self.BooleanExpression = elements[3]
-
-
-class TreeNode9(TreeNode):
-    def __init__(self, text, offset, elements):
-        super(TreeNode9, self).__init__(text, offset, elements)
-        self.Operand = elements[4]
-        self._ = elements[3]
-        self.ComparisonOperator = elements[2]
-
-
 class TreeNode10(TreeNode):
     def __init__(self, text, offset, elements):
         super(TreeNode10, self).__init__(text, offset, elements)
-        self.FunctionName = elements[0]
-        self._ = elements[5]
+        self._ = elements[3]
+        self.BooleanExpression = elements[2]
 
 
 class TreeNode11(TreeNode):
     def __init__(self, text, offset, elements):
         super(TreeNode11, self).__init__(text, offset, elements)
+        self.__ = elements[2]
+        self.BooleanOperator = elements[1]
+        self.BooleanExpression = elements[3]
+
+
+class TreeNode12(TreeNode):
+    def __init__(self, text, offset, elements):
+        super(TreeNode12, self).__init__(text, offset, elements)
+        self.Operand = elements[4]
+        self._ = elements[3]
+        self.ComparisonOperator = elements[2]
+
+
+class TreeNode13(TreeNode):
+    def __init__(self, text, offset, elements):
+        super(TreeNode13, self).__init__(text, offset, elements)
+        self.FunctionName = elements[0]
+        self._ = elements[5]
+
+
+class TreeNode14(TreeNode):
+    def __init__(self, text, offset, elements):
+        super(TreeNode14, self).__init__(text, offset, elements)
         self._ = elements[0]
 
 
@@ -155,12 +174,23 @@ class Grammar(object):
                                 elements0.append(address6)
                                 address7 = FAILURE
                                 index3 = self._offset
-                                address7 = self._read_Semicolon()
+                                address7 = self._read_GroupByClause()
                                 if address7 is FAILURE:
                                     address7 = TreeNode(self._input[index3:index3], index3)
                                     self._offset = index3
                                 if address7 is not FAILURE:
                                     elements0.append(address7)
+                                    address8 = FAILURE
+                                    index4 = self._offset
+                                    address8 = self._read_Semicolon()
+                                    if address8 is FAILURE:
+                                        address8 = TreeNode(self._input[index4:index4], index4)
+                                        self._offset = index4
+                                    if address8 is not FAILURE:
+                                        elements0.append(address8)
+                                    else:
+                                        elements0 = None
+                                        self._offset = index1
                                 else:
                                     elements0 = None
                                     self._offset = index1
@@ -293,6 +323,135 @@ class Grammar(object):
         self._cache['WhereClause'][index0] = (address0, self._offset)
         return address0
 
+    def _read_GroupByClause(self):
+        address0, index0 = FAILURE, self._offset
+        cached = self._cache['GroupByClause'].get(index0)
+        if cached:
+            self._offset = cached[1]
+            return cached[0]
+        index1, elements0 = self._offset, []
+        address1 = FAILURE
+        address1 = self._read___()
+        if address1 is not FAILURE:
+            elements0.append(address1)
+            address2 = FAILURE
+            chunk0 = None
+            if self._offset < self._input_size:
+                chunk0 = self._input[self._offset:self._offset + 8]
+            if chunk0 is not None and chunk0.lower() == 'Group By'.lower():
+                address2 = TreeNode(self._input[self._offset:self._offset + 8], self._offset)
+                self._offset = self._offset + 8
+            else:
+                address2 = FAILURE
+                if self._offset > self._failure:
+                    self._failure = self._offset
+                    self._expected = []
+                if self._offset == self._failure:
+                    self._expected.append('`Group By`')
+            if address2 is not FAILURE:
+                elements0.append(address2)
+                address3 = FAILURE
+                address3 = self._read___()
+                if address3 is not FAILURE:
+                    elements0.append(address3)
+                    address4 = FAILURE
+                    index2, elements1 = self._offset, []
+                    address5 = FAILURE
+                    address5 = self._read_Operand()
+                    if address5 is not FAILURE:
+                        elements1.append(address5)
+                        address6 = FAILURE
+                        remaining0, index3, elements2, address7 = 0, self._offset, [], True
+                        while address7 is not FAILURE:
+                            index4, elements3 = self._offset, []
+                            address8 = FAILURE
+                            address8 = self._read__()
+                            if address8 is not FAILURE:
+                                elements3.append(address8)
+                                address9 = FAILURE
+                                chunk1 = None
+                                if self._offset < self._input_size:
+                                    chunk1 = self._input[self._offset:self._offset + 1]
+                                if chunk1 == ',':
+                                    address9 = TreeNode(self._input[self._offset:self._offset + 1], self._offset)
+                                    self._offset = self._offset + 1
+                                else:
+                                    address9 = FAILURE
+                                    if self._offset > self._failure:
+                                        self._failure = self._offset
+                                        self._expected = []
+                                    if self._offset == self._failure:
+                                        self._expected.append('","')
+                                if address9 is not FAILURE:
+                                    elements3.append(address9)
+                                    address10 = FAILURE
+                                    address10 = self._read__()
+                                    if address10 is not FAILURE:
+                                        elements3.append(address10)
+                                        address11 = FAILURE
+                                        address11 = self._read_Operand()
+                                        if address11 is not FAILURE:
+                                            elements3.append(address11)
+                                        else:
+                                            elements3 = None
+                                            self._offset = index4
+                                    else:
+                                        elements3 = None
+                                        self._offset = index4
+                                else:
+                                    elements3 = None
+                                    self._offset = index4
+                            else:
+                                elements3 = None
+                                self._offset = index4
+                            if elements3 is None:
+                                address7 = FAILURE
+                            else:
+                                address7 = TreeNode6(self._input[index4:self._offset], index4, elements3)
+                                self._offset = self._offset
+                            if address7 is not FAILURE:
+                                elements2.append(address7)
+                                remaining0 -= 1
+                        if remaining0 <= 0:
+                            address6 = TreeNode(self._input[index3:self._offset], index3, elements2)
+                            self._offset = self._offset
+                        else:
+                            address6 = FAILURE
+                        if address6 is not FAILURE:
+                            elements1.append(address6)
+                        else:
+                            elements1 = None
+                            self._offset = index2
+                    else:
+                        elements1 = None
+                        self._offset = index2
+                    if elements1 is None:
+                        address4 = FAILURE
+                    else:
+                        address4 = TreeNode5(self._input[index2:self._offset], index2, elements1)
+                        self._offset = self._offset
+                    if address4 is not FAILURE:
+                        elements0.append(address4)
+                    else:
+                        elements0 = None
+                        self._offset = index1
+                else:
+                    elements0 = None
+                    self._offset = index1
+            else:
+                elements0 = None
+                self._offset = index1
+        else:
+            elements0 = None
+            self._offset = index1
+        if elements0 is None:
+            address0 = FAILURE
+        else:
+            address0 = self._actions.prepare_group_by_clause(self._input, index1, self._offset, elements0)
+            self._offset = self._offset
+        self._cache['GroupByClause'][index0] = (address0, self._offset)
+        return address0
+
     def _read_Columns(self):
         address0, index0 = FAILURE, self._offset
         cached = self._cache['Columns'].get(index0)
@@ -351,7 +510,7 @@ class Grammar(object):
                 if elements2 is None:
                     address3 = FAILURE
                 else:
-                    address3 = TreeNode5(self._input[index3:self._offset], index3, elements2)
+                    address3 = TreeNode8(self._input[index3:self._offset], index3, elements2)
                     self._offset = self._offset
                 if address3 is not FAILURE:
                     elements1.append(address3)
@@ -529,7 +688,7 @@ class Grammar(object):
                                         if elements3 is None:
                                             address12 = FAILURE
                                         else:
-                                            address12 = TreeNode8(self._input[index5:self._offset], index5, elements3)
+                                            address12 = TreeNode11(self._input[index5:self._offset], index5, elements3)
                                             self._offset = self._offset
                                         if address12 is not FAILURE:
                                             elements2.append(address12)
@@ -1181,7 +1340,7 @@ class Grammar(object):
         if elements0 is None:
             address0 = FAILURE
         else:
-            address0 = TreeNode11(self._input[index1:self._offset], index1, elements0)
+            address0 = TreeNode14(self._input[index1:self._offset], index1, elements0)
             self._offset = self._offset
         self._cache['Semicolon'][index0] = (address0, self._offset)
         return address0
