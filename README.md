@@ -18,7 +18,7 @@ more...
     comming soon...
 </details>
 
-## Getting started
+## Getting started with python
 
 <details>
 <summary>
