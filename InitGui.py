@@ -9,9 +9,8 @@ class ReportingWorkbench (FreeCADGui.Workbench):
     ToolTip = "Create Reports using SQL"
 
     def __init__(self):
-        # from arch_texture_utils.resource_utils import iconPath
-        # self.__class__.Icon = iconPath("Workbench.svg")
-        pass
+        from report_utils.resource_utils import iconPath
+        self.__class__.Icon = iconPath("Workbench.svg")
 
     def Initialize(self):
         # Initialize the module

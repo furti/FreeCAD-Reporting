@@ -3,15 +3,16 @@ import FreeCADGui
 
 import report
 
+
 class CreateReportCommand:
     toolbarName = 'Reporting_Tools'
     commandName = 'Create_Report'
 
     def GetResources(self):
+        from report_utils.resource_utils import iconPath
         return {'MenuText': "Create Report",
-                'ToolTip': "Create a new Report object to execute SQL Statements"
-                # ,
-                # 'Pixmap': iconPath('CreateConfig.svg')
+                'ToolTip': "Create a new Report object to execute SQL Statements",
+                'Pixmap': iconPath('CreateConfig.svg')
                 }
 
     def Activated(self):
