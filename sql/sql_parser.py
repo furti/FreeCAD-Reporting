@@ -1,5 +1,6 @@
 from itertools import groupby
 from . import sql_grammar
+from report_utils import logger
 
 
 def printElements(elements, intent=''):
@@ -194,17 +195,26 @@ class GroupByClause(object):
                     'Can not use * in group by clause')
 
     def execute(self, objectList):
-        groups = groupby(objectList, self.extractColumns)
+        groups = {}
+
+        for o in objectList:
+            keys = self.extractColumns(o)
+
+            if not keys in groups:
+                groups[keys] = []
+
+            groups[keys].append(o)
 
         groupedList = []
 
-        for key, group in groups:
+        for key, group in groups.items():
+            logger.debug('Group %s:%s', (key, [o for o in group]))
             groupedList.append([o for o in group])
 
         return groupedList
 
     def extractColumns(self, o):
-        return [column.execute(o) for column in self.columns]
+        return tuple([column.execute(o) for column in self.columns])
 
     def resetState(self):
         # Nothing to reset for now. No functions allowed in group by clause
