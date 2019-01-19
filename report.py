@@ -108,7 +108,8 @@ class ReportSpreadsheet(object):
         convertedValue = literalText(convertedValue)
 
         if DEBUG:
-            print('set %s to %s for %s' % (cell, convertedValue, self.spreadsheet))
+            print('set %s to %s for %s' %
+                  (cell, convertedValue, self.spreadsheet))
 
         self.spreadsheet.set(cell, convertedValue)
 
@@ -164,6 +165,7 @@ class ReportConfigPanel():
 
         self.form = FreeCADGui.PySideUic.loadUi(uiPath('report_config.ui'))
 
+        self.form.Title.setText('%s Config' % (freecadObject.Label))
         self.reportConfigTable = ReportConfigTable(
             self.report, self.form.ReportTable)
         self.form.AddStatementButton.clicked.connect(
