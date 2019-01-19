@@ -18,6 +18,7 @@ space = DocumentObject('Space', 'living', 'space', 3)
 space001 = DocumentObject('Space001', 'bedroom', 'space', 4)
 space002 = DocumentObject('Space002', 'bedroom', 'space', 5)
 space003 = DocumentObject('Space003', 'something', 'space', 6)
+norole = DocumentObject('Something', None, None, None)
 
 documentObjects = [
     wall,
@@ -25,7 +26,8 @@ documentObjects = [
     space,
     space001,
     space002,
-    space003
+    space003,
+    norole
 ]
 
 
@@ -78,7 +80,7 @@ def selectAsteriskFromDocument():
     result = executeStatement('Select * From document')
 
     assert result == [[wall], [window],  [space],
-                      [space001], [space002], [space003]]
+                      [space001], [space002], [space003], [norole]]
 
 
 def selectAsteriskFromWall():
@@ -91,14 +93,14 @@ def selectNameFromDocument():
     result = executeStatement('Select name From document')
 
     assert result == [['Wall'], ['Window'], [
-        'Space'], ['Space001'], ['Space002'], ['Space003']]
+        'Space'], ['Space001'], ['Space002'], ['Space003'], ['Something']]
 
 
 def selectNameAndStaticValuesFromDocument():
     result = executeStatement("Select name, 42,'literal' From document")
 
     assert result == [['Wall', 42, 'literal'], ['Window', 42, 'literal'], [
-        'Space', 42, 'literal'], ['Space001', 42, 'literal'], ['Space002', 42, 'literal'], ['Space003', 42, 'literal']]
+        'Space', 42, 'literal'], ['Space001', 42, 'literal'], ['Space002', 42, 'literal'], ['Space003', 42, 'literal'], ['Something', 42, 'literal']]
 
 
 def selectWithSimpleWhereClause():
@@ -133,6 +135,21 @@ def selectWithBracketsWhereClauseReversed():
         "Select * From document Where (tag = 'living' or tag='something') and role = 'space'")
 
     assert result == [[space], [space003]]
+
+
+def shouldFilterNoneAttributes():
+    result = executeStatement(
+        "Select * From document Where role IS NOT Null")
+
+    assert result == [[wall], [window],  [space],
+                      [space001], [space002], [space003]]
+
+
+def shouldOnlyShowNoneAttributes():
+    result = executeStatement(
+        "Select * From document Where role IS Null")
+
+    assert result == [[norole]]
 
 
 def selectWithSumFunction():
@@ -198,7 +215,7 @@ def runGroupByClause():
     result = executeStatement(
         "Select role, count(*) From document Group By role")
 
-    assert result == [['wall', 1], ['window', 1], ['space', 4]]
+    assert result == [['wall', 1], ['window', 1], ['space', 4], [None, 1]]
 
 
 def invalidGroupByClauseShouldThrow():
@@ -224,6 +241,8 @@ def run():
     selectWithOrWhereClause()
     selectWithBracketsWhereClause()
     selectWithBracketsWhereClauseReversed()
+    shouldFilterNoneAttributes()
+    shouldOnlyShowNoneAttributes()
     selectWithSumFunction()
     selectWithCountFunction()
     selectWithMinFunction()

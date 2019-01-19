@@ -37,6 +37,8 @@ grammar sql
         / "=" %make_comp_operator_eq
         / ">" %make_comp_operator_gt
         / "<" %make_comp_operator_lt
+        / `IS NOT` %make_comp_operator_is_not
+        / `IS` %make_comp_operator_is
 
     # Boolean End
 
@@ -52,7 +54,7 @@ grammar sql
     # Functions End
 
     # Basics
-    Operand <- Number / Literal / Reference
+    Operand <- Null / Number / Literal / Reference
 
     Reference <- [a-zA-Z0-9]+ %make_reference
 
@@ -63,6 +65,8 @@ grammar sql
     Asterisk <- "*" %make_asterisk
     
     Semicolon <- _ ";"
+
+    Null <- `Null` %make_null
 
     # optional whitespace
     _ <- [ \t\r\n]*

@@ -915,6 +915,36 @@ class Grammar(object):
                                     self._expected.append('"<"')
                             if address0 is FAILURE:
                                 self._offset = index1
+                                chunk6 = None
+                                if self._offset < self._input_size:
+                                    chunk6 = self._input[self._offset:self._offset + 6]
+                                if chunk6 is not None and chunk6.lower() == 'IS NOT'.lower():
+                                    address0 = self._actions.make_comp_operator_is_not(self._input, self._offset, self._offset + 6)
+                                    self._offset = self._offset + 6
+                                else:
+                                    address0 = FAILURE
+                                    if self._offset > self._failure:
+                                        self._failure = self._offset
+                                        self._expected = []
+                                    if self._offset == self._failure:
+                                        self._expected.append('`IS NOT`')
+                                if address0 is FAILURE:
+                                    self._offset = index1
+                                    chunk7 = None
+                                    if self._offset < self._input_size:
+                                        chunk7 = self._input[self._offset:self._offset + 2]
+                                    if chunk7 is not None and chunk7.lower() == 'IS'.lower():
+                                        address0 = self._actions.make_comp_operator_is(self._input, self._offset, self._offset + 2)
+                                        self._offset = self._offset + 2
+                                    else:
+                                        address0 = FAILURE
+                                        if self._offset > self._failure:
+                                            self._failure = self._offset
+                                            self._expected = []
+                                        if self._offset == self._failure:
+                                            self._expected.append('`IS`')
+                                    if address0 is FAILURE:
+                                        self._offset = index1
         self._cache['ComparisonOperator'][index0] = (address0, self._offset)
         return address0
 
@@ -1089,15 +1119,18 @@ class Grammar(object):
             self._offset = cached[1]
             return cached[0]
         index1 = self._offset
-        address0 = self._read_Number()
+        address0 = self._read_Null()
         if address0 is FAILURE:
             self._offset = index1
-            address0 = self._read_Literal()
+            address0 = self._read_Number()
             if address0 is FAILURE:
                 self._offset = index1
-                address0 = self._read_Reference()
+                address0 = self._read_Literal()
                 if address0 is FAILURE:
                     self._offset = index1
+                    address0 = self._read_Reference()
+                    if address0 is FAILURE:
+                        self._offset = index1
         self._cache['Operand'][index0] = (address0, self._offset)
         return address0
 
@@ -1343,6 +1376,28 @@ class Grammar(object):
             address0 = TreeNode14(self._input[index1:self._offset], index1, elements0)
             self._offset = self._offset
         self._cache['Semicolon'][index0] = (address0, self._offset)
+        return address0
+
+    def _read_Null(self):
+        address0, index0 = FAILURE, self._offset
+        cached = self._cache['Null'].get(index0)
+        if cached:
+            self._offset = cached[1]
+            return cached[0]
+        chunk0 = None
+        if self._offset < self._input_size:
+            chunk0 = self._input[self._offset:self._offset + 4]
+        if chunk0 is not None and chunk0.lower() == 'Null'.lower():
+            address0 = self._actions.make_null(self._input, self._offset, self._offset + 4)
+            self._offset = self._offset + 4
+        else:
+            address0 = FAILURE
+            if self._offset > self._failure:
+                self._failure = self._offset
+                self._expected = []
+            if self._offset == self._failure:
+                self._expected.append('`Null`')
+        self._cache['Null'][index0] = (address0, self._offset)
         return address0
 
     def _read__(self):

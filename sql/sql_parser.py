@@ -268,6 +268,20 @@ class IdentityExtractor(object):
         return isinstance(obj, IdentityExtractor)
 
 
+class NoneExtractor(object):
+    def extract(self, o):
+        return None
+
+    def resetState(self):
+        pass
+
+    def __str__(self):
+        return 'NULL'
+
+    def __eq__(self, obj):
+        return isinstance(obj, NoneExtractor)
+
+
 class StaticExtractor(object):
     def __init__(self, value):
         self.value = value
@@ -431,6 +445,34 @@ class LessThanComparisonOperator(object):
         return '<'
 
 
+class IsComparisonOperator(object):
+    def compare(self, left, right):
+        if left is None and right is None:
+            return True
+
+        if left is not None and right is not None:
+            return left == right
+
+        return False
+
+    def __str__(self):
+        return 'IS'
+
+
+class IsNotComparisonOperator(object):
+    def compare(self, left, right):
+        if left is None and right is None:
+            return False
+
+        if left is not None and right is not None:
+            return left != right
+
+        return True
+
+    def __str__(self):
+        return 'IS NOT'
+
+
 class AndBooleanOperator(object):
     def compare(self, left, right):
         return left and right
@@ -551,6 +593,9 @@ def findFunctionOperator(elements):
 
 
 def findExtractor(element):
+    if element is None:
+        return (NoneExtractor(), 'Null', False)
+
     if isinstance(element, Asterisk):
         return (IdentityExtractor(), '*', False)
 
@@ -669,6 +714,9 @@ class ParserActions(object):
     def make_number(self, input, start, end, elements):
         return int(input[start:end], 10)
 
+    def make_null(self, input, start, end):
+        return None
+
     def make_literal(self, input, start, end, elements):
         return input[start + 1:end - 1]
 
@@ -689,6 +737,12 @@ class ParserActions(object):
 
     def make_comp_operator_lt(self, input, start, end):
         return LessThanComparisonOperator()
+
+    def make_comp_operator_is(self, input, start, end):
+        return IsComparisonOperator()
+
+    def make_comp_operator_is_not(self, input, start, end):
+        return IsNotComparisonOperator()
 
     def make_boolean_operator_and(self, input, start, end):
         return AndBooleanOperator()
