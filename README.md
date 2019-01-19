@@ -178,6 +178,10 @@ Normally you want to compare Attributes for some given values. A comparison is w
  - **>=**: Checks if the left value is greater than or equals to the right value
  - **<=**: Checks if the left value is less than or equals to the right value
 
+There are also two special comparison operators available to check for ```None```. This normally means, that a given object does not have the given attribute or it has no value assigend.
+ - **IS NULL**: Checks if the left value is None.
+ - **IS NOT NULL**: Check if the left value is not None. This is especially usefull to filter all objects that do not have the given attribute assigned.
+
 To combine multiple comparisons you can use the ```AND``` and ```OR``` keywords. You can also use Brackets ```(``` ```)``` to build complex expressions.
 
 ### Group By \<GroupingColumns>
