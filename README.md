@@ -99,6 +99,20 @@ more...
     comming soon...
 </details>
 
+## How To...
+
+<details>
+<summary>
+Check this section for a list of common sql queries.
+
+more...
+</summary>
+
+### Architecture
+[... get a list of arch objects by role](./Documentation/Howto/Arch/get_number_of_objects_by_role.md)
+
+</details>
+
 ## SQL Reference
 
 <details>
