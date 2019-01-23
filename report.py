@@ -56,7 +56,7 @@ class ReportSpreadsheet(object):
     def printHeader(self, header, numberOfColumns):
         spreadsheet = self.spreadsheet
 
-        if header is None:
+        if header is None or header == '':
             return
 
         headerCell = 'A%s' % (self.lineNumber)
