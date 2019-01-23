@@ -105,7 +105,7 @@ class Columns(object):
         for column in self.columns:
             if column.grouping:
                 groupingFound = True
-            else:
+            elif not column.static:
                 nonGroupingFound = True
 
         if groupingFound and nonGroupingFound:
@@ -162,6 +162,7 @@ class Column(object):
         self.columnName = columnName
         self.dataExtractor = dataExtractor
         self.grouping = grouping
+        self.static = isinstance(dataExtractor, StaticExtractor)
 
     def execute(self, o):
         return self.dataExtractor.extract(o)

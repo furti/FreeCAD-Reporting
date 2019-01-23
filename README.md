@@ -151,8 +151,8 @@ You can also use functions to aggregate data for a given attribute. Supported fu
  - **Min**: Gets the minimum Value of the given Attribute
  - **Max**: Gets the maximum Value of the given Attribute
 
-Without a group by clause, it is not possible to mix single attributes and functions in a select statement. Only a single row will be returned for such a query. See ```Group by``` for more details on mixing attributes and functions.
-
+Without a group by clause, it is not possible to mix single attributes and functions in a select statements. The only exceptions are static values (E.g. "Select 'Number of objects', Count(*).."). 
+Only a single row will be returned for such a query. See ```Group by``` for more details on mixing attributes and functions.
 
 ### From \<Source>
 

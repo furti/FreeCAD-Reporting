@@ -230,6 +230,13 @@ def invalidGroupByClauseShouldThrow():
     assert exceptionMessage == 'Only columns from the group by clause are allowed in the select clause'
 
 
+def staticColumnAndFunction():
+    result = executeStatement(
+        "Select 'Sum', Sum(num) From document")
+
+    assert result == [['Sum', 21]]
+
+
 def run():
     statementShouldParseWithDifferentStyles()
     selectAsteriskFromDocument()
@@ -252,3 +259,4 @@ def run():
     columnNamesShouldBeCorrect()
     runGroupByClause()
     invalidGroupByClauseShouldThrow()
+    staticColumnAndFunction()
