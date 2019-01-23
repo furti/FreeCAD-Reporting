@@ -108,6 +108,10 @@ Check this section for a list of common sql queries.
 more...
 </summary>
 
+### General
+
+[... add a Result Row for a Statement](./Documentation/Howto/General/add_result_row_in_report.md)
+
 ### Architecture
 [... get a list of arch objects by role](./Documentation/Howto/Arch/get_number_of_objects_by_role.md)
 
