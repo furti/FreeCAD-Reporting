@@ -13,6 +13,7 @@ from PySide2.QtWidgets import QGroupBox
 from PySide2.QtWidgets import QLineEdit
 from PySide2.QtWidgets import QFormLayout
 from PySide2.QtWidgets import QPushButton
+from PySide2.QtWidgets import QCheckBox
 
 SQL_PARSER = freecad_sql_parser.newParser()
 
@@ -34,7 +35,11 @@ def nextColumnName(actualColumnName):
 
 
 def lineRange(startColumn, endColumn, lineNumber):
-    return '%s%s:%s%s' % (startColumn, lineNumber, endColumn, lineNumber)
+    return cellRange(startColumn, lineNumber, endColumn, lineNumber)
+
+
+def cellRange(startColumn, startLine, endColumn, endLine):
+    return '%s%s:%s%s' % (startColumn, startLine, endColumn, endLine)
 
 
 def buildCellName(columnName, lineNumber):
@@ -88,7 +93,11 @@ class ReportSpreadsheet(object):
 
         self.lineNumber += 1
 
-    def printRows(self, rows):
+    def printRows(self, rows, skipRowsAfter=False, printResultInBold=False):
+        lineNumberBefore = self.lineNumber
+
+        columnName = 'A'
+
         for row in rows:
             columnName = None
 
@@ -100,7 +109,12 @@ class ReportSpreadsheet(object):
 
             self.lineNumber += 1
 
-        self.lineNumber += 2
+        if printResultInBold:
+            self.spreadsheet.setStyle(
+                cellRange('A', lineNumberBefore, columnName, self.lineNumber), 'bold', 'add')
+
+        if not skipRowsAfter:
+            self.lineNumber += 2
 
     def setCellValue(self, cell, value):
         if value is None:
@@ -123,7 +137,7 @@ class ReportSpreadsheet(object):
 
 
 class ReportEntryWidget(QGroupBox):
-    def __init__(self, header, statement, panel, index):
+    def __init__(self, header, statement, skipRowsAfter, skipColumnNames, printResultInBold, panel, index):
         super().__init__()
 
         self.panel = panel
@@ -131,7 +145,14 @@ class ReportEntryWidget(QGroupBox):
 
         self.headerEdit = QLineEdit(header)
         self.statementEdit = QTextEdit(statement)
+        self.skipRowsAfterEdit = QCheckBox('Skip Empty Rows After Statement')
+        self.skipColumnNamesEdit = QCheckBox('Skip Column Names')
+        self.printResultInBoldEdit = QCheckBox('Print Result in bold')
         self.removeButton = QPushButton('Remove')
+
+        self.skipRowsAfterEdit.setChecked(skipRowsAfter)
+        self.skipColumnNamesEdit.setChecked(skipColumnNames)
+        self.printResultInBoldEdit.setChecked(printResultInBold)
 
         self.removeButton.clicked.connect(self.remove)
 
@@ -142,6 +163,9 @@ class ReportEntryWidget(QGroupBox):
 
         self.layout.addRow('Header', self.headerEdit)
         self.layout.addRow('Statement', self.statementEdit)
+        self.layout.addRow(' ', self.skipColumnNamesEdit)
+        self.layout.addRow(' ', self.skipRowsAfterEdit)
+        self.layout.addRow(' ', self.printResultInBoldEdit)
         self.layout.addRow(' ', self.removeButton)
 
         self.setLayout(self.layout)
@@ -152,10 +176,16 @@ class ReportEntryWidget(QGroupBox):
     def getStatement(self):
         return self.statementEdit.toPlainText()
 
-    def remove(self):
-        print(self.panel)
-        print(self.panel.entries)
+    def shouldSkipColumnNames(self):
+        return self.skipColumnNamesEdit.isChecked()
 
+    def shouldSkipRowsAfter(self):
+        return self.skipRowsAfterEdit.isChecked()
+
+    def shouldPrintResultInBold(self):
+        return self.printResultInBoldEdit.isChecked()
+
+    def remove(self):
         self.panel.removeRow(self)
 
 
@@ -177,10 +207,12 @@ class ReportConfigPanel():
 
     def setupRows(self):
         for statement in self.report.statements:
-            self.addRow(statement.header, statement.plainTextStatement)
+            self.addRow(statement.header, statement.plainTextStatement,
+                        statement.skipRowsAfter, statement.skipColumnNames, statement.printResultInBold)
 
-    def addRow(self, header=None, statement=None):
-        widget = ReportEntryWidget(header, statement, self, len(self.entries))
+    def addRow(self, header=None, statement=None, skipRowsAfter=False, skipColumnNames=False, printResultInBold=False):
+        widget = ReportEntryWidget(header, statement, skipRowsAfter,
+                                   skipColumnNames, printResultInBold, self, len(self.entries))
 
         self.entries.append(widget)
 
@@ -207,16 +239,19 @@ class ReportConfigPanel():
 
         for entry in self.entries:
             reportStatement = ReportStatement(
-                entry.getHeader(), entry.getStatement())
+                entry.getHeader(), entry.getStatement(), entry.shouldSkipRowsAfter(), entry.shouldSkipColumnNames(), entry.shouldPrintResultInBold())
 
             self.report.statements.append(reportStatement)
 
 
 class ReportStatement(object):
-    def __init__(self, header, plainTextStatement):
+    def __init__(self, header, plainTextStatement, skipRowsAfter=False, skipColumnNames=False, printResultInBold=False):
         self.header = header
         self.plainTextStatement = plainTextStatement
         self.statement = SQL_PARSER.parse(plainTextStatement)
+        self.skipRowsAfter = skipRowsAfter
+        self.skipColumnNames = skipColumnNames
+        self.printResultInBold = printResultInBold
 
         if DEBUG:
             print('parsed statement %s' % (plainTextStatement))
@@ -229,12 +264,14 @@ class ReportStatement(object):
         return self.statement.getColumnNames()
 
     def serializeState(self):
-        return [self.header, self.plainTextStatement]
+        return [self.header, self.plainTextStatement, self.skipRowsAfter, self.skipColumnNames, self.printResultInBold]
 
     @staticmethod
     def deserializeState(state):
+        if len(state) == 2:
+            return ReportStatement(state[0], state[1])
 
-        return ReportStatement(state[0], state[1])
+        return ReportStatement(state[0], state[1], state[2], state[3], state[4])
 
 
 class Report():
@@ -269,11 +306,13 @@ class Report():
 
             spreadsheet.printHeader(statement.header, len(columnNames))
 
-            spreadsheet.printColumnLabels(columnNames)
+            if not statement.skipColumnNames:
+                spreadsheet.printColumnLabels(columnNames)
 
             rows = statement.execute()
 
-            spreadsheet.printRows(rows)
+            spreadsheet.printRows(
+                rows, statement.skipRowsAfter, statement.printResultInBold)
 
         spreadsheet.recompute()
 

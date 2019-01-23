@@ -54,7 +54,7 @@ What do we see here?
  - (2) The column names extracted from our statement
  - (3) The list of objects matching our statement and the values extracted for each column
 
-8. This is pretty good. But I think we can do even better. Double click the Report in the Treeview again. Click on ```Add Statement``` and add "Living Area" in the ```Header``` field and the following in the ```Statement``` field:
+8. This is pretty good. But I think we can do even better. Double click the Report in the Treeview again. Click on ```Add Statement``` and add "Living Area" in the ```Header``` field. Also enable ```Skip empty rows after statement``` here and add the following in the ```Statement``` field:
 
 ```sql
 Select Tag, Sum(Area)
@@ -63,10 +63,10 @@ Where IfcRole = 'Space'
 Group By Tag
 ```
 
-9. Click ```Add Statement``` once again and leave the ```Header``` field empty and add the following to the ```Statement``` field:
+9. Click ```Add Statement``` once again and leave the ```Header``` field empty. Enable ```Skip Column Names``` and ```Print Result in Bold``` and add the following to the ```Statement``` field:
 
 ```sql
-Select Sum(Area)
+Select 'Total', Sum(Area)
 From document
 Where IfcRole = 'Space'
 ```
