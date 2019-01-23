@@ -7,7 +7,12 @@ from pivy import coin
 from report_utils.resource_utils import uiPath
 from sql import freecad_sql_parser
 
-from PySide2.QtWidgets import QTableWidgetItem, QTextEdit
+from PySide2.QtWidgets import QTableWidgetItem
+from PySide2.QtWidgets import QTextEdit
+from PySide2.QtWidgets import QGroupBox
+from PySide2.QtWidgets import QLineEdit
+from PySide2.QtWidgets import QFormLayout
+from PySide2.QtWidgets import QPushButton
 
 SQL_PARSER = freecad_sql_parser.newParser()
 
@@ -117,64 +122,78 @@ class ReportSpreadsheet(object):
         self.spreadsheet.recompute()
 
 
-class ReportConfigTable():
-    def __init__(self, report, qtTable):
-        self.report = report
-        self.qtTable = qtTable
+class ReportEntryWidget(QGroupBox):
+    def __init__(self, header, statement, panel, index):
+        super().__init__()
 
-        self.setupTable()
+        self.panel = panel
+        self.index = index
 
-    def setupTable(self):
-        for statement in self.report.statements:
-            self.addRow(statement.header, statement.plainTextStatement)
+        self.headerEdit = QLineEdit(header)
+        self.statementEdit = QTextEdit(statement)
+        self.removeButton = QPushButton('Remove')
 
-    def addRow(self, header=None, statement=None):
-        rowPosition = self.qtTable.rowCount()
-        self.qtTable.insertRow(rowPosition)
+        self.removeButton.clicked.connect(self.remove)
 
-        headerEdit = QTableWidgetItem(header)
-        statementEdit = QTextEdit(statement)
+        self.initUi()
 
-        self.qtTable.setItem(rowPosition, 0, headerEdit)
-        self.qtTable.setCellWidget(rowPosition, 1, statementEdit)
+    def initUi(self):
+        self.layout = QFormLayout()
 
-    def removeRow(self):
-        selectionModel = self.qtTable.selectionModel()
+        self.layout.addRow('Header', self.headerEdit)
+        self.layout.addRow('Statement', self.statementEdit)
+        self.layout.addRow(' ', self.removeButton)
 
-        if selectionModel.hasSelection():
-            for selection in selectionModel.selectedRows():
-                self.qtTable.removeRow(selection.row())
+        self.setLayout(self.layout)
 
-    def saveIntoConfig(self):
-        self.report.statements.clear()
+    def getHeader(self):
+        return self.headerEdit.text()
 
-        for row in range(self.qtTable.rowCount()):
-            headerEdit = self.qtTable.item(row, 0)
-            statementEdit = self.qtTable.cellWidget(row, 1)
+    def getStatement(self):
+        return self.statementEdit.toPlainText()
 
-            reportStatement = ReportStatement(
-                headerEdit.text(), statementEdit.toPlainText())
+    def remove(self):
+        print(self.panel)
+        print(self.panel.entries)
 
-            self.report.statements.append(reportStatement)
+        self.panel.removeRow(self)
 
 
 class ReportConfigPanel():
     def __init__(self, report, freecadObject):
         self.report = report
         self.freecadObject = freecadObject
+        self.entries = []
 
         self.form = FreeCADGui.PySideUic.loadUi(uiPath('report_config.ui'))
 
         self.form.Title.setText('%s Config' % (freecadObject.Label))
-        self.reportConfigTable = ReportConfigTable(
-            self.report, self.form.ReportTable)
+        self.scrollAreaWidget = self.form.ScrollArea.widget()
+
         self.form.AddStatementButton.clicked.connect(
-            self.reportConfigTable.addRow)
-        self.form.RemoveStatementButton.clicked.connect(
-            self.reportConfigTable.removeRow)
+            self.addRow)
+
+        self.setupRows()
+
+    def setupRows(self):
+        for statement in self.report.statements:
+            self.addRow(statement.header, statement.plainTextStatement)
+
+    def addRow(self, header=None, statement=None):
+        widget = ReportEntryWidget(header, statement, self, len(self.entries))
+
+        self.entries.append(widget)
+
+        self.scrollAreaWidget.layout().addWidget(widget)
+
+    def removeRow(self, widget):
+        self.entries.pop(widget.index)
+        layoutItem = self.scrollAreaWidget.layout().takeAt(widget.index)
+
+        layoutItem.widget().deleteLater()
 
     def accept(self):
-        self.reportConfigTable.saveIntoConfig()
+        self.saveIntoConfig()
 
         FreeCADGui.Control.closeDialog()
 
@@ -182,6 +201,15 @@ class ReportConfigPanel():
 
     def reject(self):
         FreeCADGui.Control.closeDialog()
+
+    def saveIntoConfig(self):
+        self.report.statements.clear()
+
+        for entry in self.entries:
+            reportStatement = ReportStatement(
+                entry.getHeader(), entry.getStatement())
+
+            self.report.statements.append(reportStatement)
 
 
 class ReportStatement(object):
