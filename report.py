@@ -173,8 +173,11 @@ class ReportEntryWidget(QGroupBox):
     def getHeader(self):
         return self.headerEdit.text()
 
-    def getStatement(self):
+    def getPlainTextStatement(self):
         return self.statementEdit.toPlainText()
+    
+    def getHtmlStatement(self):
+        return self.statementEdit.toHtml()
 
     def shouldSkipColumnNames(self):
         return self.skipColumnNamesEdit.isChecked()
@@ -207,7 +210,12 @@ class ReportConfigPanel():
 
     def setupRows(self):
         for statement in self.report.statements:
-            self.addRow(statement.header, statement.plainTextStatement,
+            statementText = statement.htmlStatement
+
+            if statementText is None:
+                statementText = statement.plainTextStatement
+
+            self.addRow(statement.header, statementText,
                         statement.skipRowsAfter, statement.skipColumnNames, statement.printResultInBold)
 
     def addRow(self, header=None, statement=None, skipRowsAfter=False, skipColumnNames=False, printResultInBold=False):
@@ -239,15 +247,16 @@ class ReportConfigPanel():
 
         for entry in self.entries:
             reportStatement = ReportStatement(
-                entry.getHeader(), entry.getStatement(), entry.shouldSkipRowsAfter(), entry.shouldSkipColumnNames(), entry.shouldPrintResultInBold())
+                entry.getHeader(), entry.getPlainTextStatement(), entry.getHtmlStatement(), entry.shouldSkipRowsAfter(), entry.shouldSkipColumnNames(), entry.shouldPrintResultInBold())
 
             self.report.statements.append(reportStatement)
 
 
 class ReportStatement(object):
-    def __init__(self, header, plainTextStatement, skipRowsAfter=False, skipColumnNames=False, printResultInBold=False):
+    def __init__(self, header, plainTextStatement, htmlStatement=None, skipRowsAfter=False, skipColumnNames=False, printResultInBold=False):
         self.header = header
         self.plainTextStatement = plainTextStatement
+        self.htmlStatement = htmlStatement
         self.statement = SQL_PARSER.parse(plainTextStatement)
         self.skipRowsAfter = skipRowsAfter
         self.skipColumnNames = skipColumnNames
@@ -264,14 +273,19 @@ class ReportStatement(object):
         return self.statement.getColumnNames()
 
     def serializeState(self):
-        return [self.header, self.plainTextStatement, self.skipRowsAfter, self.skipColumnNames, self.printResultInBold]
+        return [self.header, self.plainTextStatement, self.htmlStatement, self.skipRowsAfter, self.skipColumnNames, self.printResultInBold]
 
     @staticmethod
     def deserializeState(state):
-        if len(state) == 2:
+        stateItems = len(state)
+
+        if stateItems == 2:
             return ReportStatement(state[0], state[1])
 
-        return ReportStatement(state[0], state[1], state[2], state[3], state[4])
+        if stateItems == 5:
+            return ReportStatement(state[0], state[1], state[2], state[3], state[4])
+
+        return ReportStatement(state[0], state[1], state[2], state[3], state[4], state[5])
 
 
 class Report():
