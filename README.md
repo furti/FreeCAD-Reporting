@@ -17,9 +17,9 @@ This section gives you a step by step introduction on how to get startet with th
 more...
 </summary>
     
-1. First you should download the Reporting Workbench. It is not in the addon manager right now. So download the ZIP from this repository and copy it to your FreeCAD Addon directory (https://www.freecadweb.org/wiki/How_to_install_additional_workbenches)
+1. First you should install the Reporting Workbench. It is available from the addon manager directly in FreeCAD. Go to ```Tools > Addon Manager```, scroll down select the ```Reporting``` entry and click ```Install```. It's best to restart FreeCAD after the installation is done.
 
-![Download Zip](./Documentation/download_zip.png)
+![Addon Manager](./Documentation/addon_manager.png)
 
 2. Next you should download the sample File [Simple_House.FCStd](./Documentation/Simple_House.FCStd) and open it in FreeCAD. Now you should see something like this.
 
