@@ -1,6 +1,7 @@
 import FreeCAD
 import FreeCADGui
 import string
+import json
 
 from FreeCAD import Units
 from pivy import coin
@@ -20,6 +21,38 @@ SQL_PARSER = freecad_sql_parser.newParser()
 COLUMN_NAMES = list(string.ascii_uppercase)
 
 DEBUG = True
+
+
+def statementsToDict(reportStatements):
+    statements = []
+
+    for reportStatement in reportStatements:
+        statements.append({
+            'header': reportStatement.header,
+            'plainTextStatement': reportStatement.plainTextStatement,
+            'htmlStatement': reportStatement.htmlStatement,
+            'skipRowsAfter': reportStatement.skipRowsAfter,
+            'skipColumnNames': reportStatement.skipColumnNames,
+            'printResultInBold': reportStatement.printResultInBold
+        })
+
+    return {
+        'statements': statements
+    }
+
+
+def dictToStatements(statementDict):
+    reportStatements = []
+
+    for statement in statementDict['statements']:
+        reportStatement = ReportStatement(statement['header'],
+                                          statement['plainTextStatement'], statement['htmlStatement'],
+                                          statement['skipRowsAfter'], statement['skipColumnNames'],
+                                          statement['printResultInBold'])
+
+        reportStatements.append(reportStatement)
+
+    return reportStatements
 
 
 def nextColumnName(actualColumnName):
@@ -175,7 +208,7 @@ class ReportEntryWidget(QGroupBox):
 
     def getPlainTextStatement(self):
         return self.statementEdit.toPlainText()
-    
+
     def getHtmlStatement(self):
         return self.statementEdit.toHtml()
 
@@ -330,6 +363,23 @@ class Report():
 
         spreadsheet.recompute()
 
+    def exportJson(self, fileObject):
+        try:
+            jsonDict = statementsToDict(self.statements)
+
+            json.dump(jsonDict, fileObject, sort_keys=True,
+                      indent=4, ensure_ascii=False)
+        finally:
+            fileObject.close()
+
+    def importJson(self, fileObject):
+        try:
+            jsonDict = json.load(fileObject, encoding='utf-8')
+
+            self.statements = dictToStatements(jsonDict)
+        finally:
+            fileObject.close()
+
     def __getstate__(self):
         return [statement.serializeState() for statement in self.statements]
 
@@ -390,12 +440,15 @@ class ViewProviderReport():
         return None
 
 
-def createReport():
+def createReport(fileObject=None):
     import Spreadsheet
 
     reportObject = FreeCAD.ActiveDocument.addObject(
         "App::FeaturePython", "Report")
     report = Report(reportObject)
+
+    if fileObject is not None:
+        report.importJson(fileObject)
 
     result = FreeCAD.ActiveDocument.addObject("Spreadsheet::Sheet", "Result")
     reportObject.Result = result
