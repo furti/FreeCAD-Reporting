@@ -237,6 +237,13 @@ def staticColumnAndFunction():
     assert result == [['Sum', 21]]
 
 
+def emptyResultShouldNotThrowOnFunction():
+    result = executeStatement(
+        "Select count(*) From document where role = 'xxx'")
+
+    assert result == []
+
+
 def run():
     statementShouldParseWithDifferentStyles()
     selectAsteriskFromDocument()
@@ -260,3 +267,4 @@ def run():
     runGroupByClause()
     invalidGroupByClauseShouldThrow()
     staticColumnAndFunction()
+    emptyResultShouldNotThrowOnFunction()

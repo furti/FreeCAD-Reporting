@@ -118,6 +118,9 @@ class Columns(object):
         for o in objectList:
             result.append([column.execute(o) for column in self.columns])
 
+        if len(result) == 0:
+            return result
+
         if self.grouping:
             return [result[-1]]
 
