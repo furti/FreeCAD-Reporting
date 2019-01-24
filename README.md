@@ -112,6 +112,8 @@ more...
 
 [... add a Result Row for a Statement](./Documentation/Howto/General/add_result_row_in_report.md)
 
+[... create a report collection](./Documentation/Howto/General/create_report_collection.md)
+
 ### Architecture
 [... get a list of arch objects by role](./Documentation/Howto/Arch/get_number_of_objects_by_role.md)
 
