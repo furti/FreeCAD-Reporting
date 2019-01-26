@@ -95,8 +95,38 @@ This section gives you a step by step introduction on how to get startet with th
 
 more...
 </summary>
+
+1. First you should install the Reporting Workbench. It is available from the addon manager directly in FreeCAD. Go to ```Tools > Addon Manager```, scroll down select the ```Reporting``` entry and click ```Install```. It's best to restart FreeCAD after the installation is done.
+
+![Addon Manager](./Documentation/addon_manager.png)
+
+2. Next you should download the sample File [Simple_House.FCStd](./Documentation/Simple_House.FCStd) and open it in FreeCAD. Now you should see something like this.
+
+![Sample House](./Documentation/Sample_House.png)
     
-    comming soon...
+This file contains a simple House with some rooms and doors. Its not pretty, but it should be good enough to extract some data out of it ;)
+
+3. Now that everything is set up, open the python console and import the SQL Parser and create a new instance. The parser can be used to parse as may statements as you want.
+
+```python
+from sql import freecad_sql_parser
+sql_parser = freecad_sql_parser.newParser()
+```
+
+4. Now use the sql_parser to parse a statement. You can execute a parsed statement as often as you want.
+
+```python
+select_all = sql_parser.parse('Select * from document')
+```
+
+5. Now execute the statement. This will give you a list of all objects in the document.
+
+```python
+all_objects = select_all.execute()
+str(all_objects)
+'[[<App::GeometryPython object>], [<App::GeometryPython object>], [<App::GeometryPython object>], [<Sketcher::SketchObject>], [<group object>], [<Sketcher::SketchObject>], [<Sketcher::SketchObject>], [<Part::PartFeature>], [<Sketcher::SketchObject>], [<Part::PartFeature>], [<Sketcher::SketchObject>], [<Part::PartFeature>], [<Sketcher::SketchObject>], [<Part::PartFeature>], [<Sketcher::SketchObject>], [<Part::PartFeature>], [<Sketcher::SketchObject>], [<Part::PartFeature>], [<Sketcher::SketchObject>], [<Part::PartFeature>], [<Sketcher::SketchObject>], [<Part::PartFeature>], [<Part::PartFeature>], [<Sketcher::SketchObject>], [<Part::PartFeature>], [<Part::PartFeature>], [<Part::PartFeature>], [<Part::PartFeature>], [<Part::PartFeature>], [<Part::PartFeature>], [<Part::PartFeature>], [<Part::PartFeature>], [<Part::PartFeature>], [<Part::PartFeature>], [<Part::PartFeature>], [<Part::PartFeature>], [<Part::PartFeature>]]'
+```
+
 </details>
 
 ## How To...
