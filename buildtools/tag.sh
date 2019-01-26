@@ -10,7 +10,7 @@ printf 'Bugfixes\n\n\n' >> $RELEASE_FILE
 printf 'Documentation\n\n\n' >> $RELEASE_FILE
 
 git log $(git describe --tags --abbrev=0)..HEAD --pretty=format:%s > $COMMIT_FILE
-sed -i 's/^/ -/' $COMMIT_FILE
+sed -i 's/^/ - /' $COMMIT_FILE
 
 cat $COMMIT_FILE >> $RELEASE_FILE
 rm $COMMIT_FILE
