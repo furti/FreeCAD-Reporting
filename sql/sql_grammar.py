@@ -44,14 +44,14 @@ class TreeNode4(TreeNode):
 class TreeNode5(TreeNode):
     def __init__(self, text, offset, elements):
         super(TreeNode5, self).__init__(text, offset, elements)
-        self.Operand = elements[0]
+        self.GroupByOperand = elements[0]
 
 
 class TreeNode6(TreeNode):
     def __init__(self, text, offset, elements):
         super(TreeNode6, self).__init__(text, offset, elements)
         self._ = elements[2]
-        self.Operand = elements[3]
+        self.GroupByOperand = elements[3]
 
 
 class TreeNode7(TreeNode):
@@ -109,6 +109,19 @@ class TreeNode13(TreeNode):
 class TreeNode14(TreeNode):
     def __init__(self, text, offset, elements):
         super(TreeNode14, self).__init__(text, offset, elements)
+        self.MultiParamFunctionName = elements[0]
+        self._ = elements[3]
+
+
+class TreeNode15(TreeNode):
+    def __init__(self, text, offset, elements):
+        super(TreeNode15, self).__init__(text, offset, elements)
+        self._ = elements[2]
+
+
+class TreeNode16(TreeNode):
+    def __init__(self, text, offset, elements):
+        super(TreeNode16, self).__init__(text, offset, elements)
         self._ = elements[0]
 
 
@@ -357,7 +370,7 @@ class Grammar(object):
                     address4 = FAILURE
                     index2, elements1 = self._offset, []
                     address5 = FAILURE
-                    address5 = self._read_Operand()
+                    address5 = self._read_GroupByOperand()
                     if address5 is not FAILURE:
                         elements1.append(address5)
                         address6 = FAILURE
@@ -389,7 +402,7 @@ class Grammar(object):
                                     if address10 is not FAILURE:
                                         elements3.append(address10)
                                         address11 = FAILURE
-                                        address11 = self._read_Operand()
+                                        address11 = self._read_GroupByOperand()
                                         if address11 is not FAILURE:
                                             elements3.append(address11)
                                         else:
@@ -546,13 +559,32 @@ class Grammar(object):
         address0 = self._read_Asterisk()
         if address0 is FAILURE:
             self._offset = index1
-            address0 = self._read_Function()
+            address0 = self._read_MultiParamFunction()
             if address0 is FAILURE:
                 self._offset = index1
-                address0 = self._read_Operand()
+                address0 = self._read_Function()
                 if address0 is FAILURE:
                     self._offset = index1
+                    address0 = self._read_Operand()
+                    if address0 is FAILURE:
+                        self._offset = index1
         self._cache['Column'][index0] = (address0, self._offset)
+        return address0
+
+    def _read_GroupByOperand(self):
+        address0, index0 = FAILURE, self._offset
+        cached = self._cache['GroupByOperand'].get(index0)
+        if cached:
+            self._offset = cached[1]
+            return cached[0]
+        index1 = self._offset
+        address0 = self._read_MultiParamFunction()
+        if address0 is FAILURE:
+            self._offset = index1
+            address0 = self._read_Operand()
+            if address0 is FAILURE:
+                self._offset = index1
+        self._cache['GroupByOperand'][index0] = (address0, self._offset)
         return address0
 
     def _read_BooleanExpression(self):
@@ -1112,6 +1144,183 @@ class Grammar(object):
         self._cache['FunctionName'][index0] = (address0, self._offset)
         return address0
 
+    def _read_MultiParamFunction(self):
+        address0, index0 = FAILURE, self._offset
+        cached = self._cache['MultiParamFunction'].get(index0)
+        if cached:
+            self._offset = cached[1]
+            return cached[0]
+        index1, elements0 = self._offset, []
+        address1 = FAILURE
+        address1 = self._read_MultiParamFunctionName()
+        if address1 is not FAILURE:
+            elements0.append(address1)
+            address2 = FAILURE
+            address2 = self._read__()
+            if address2 is not FAILURE:
+                elements0.append(address2)
+                address3 = FAILURE
+                chunk0 = None
+                if self._offset < self._input_size:
+                    chunk0 = self._input[self._offset:self._offset + 1]
+                if chunk0 == '(':
+                    address3 = TreeNode(self._input[self._offset:self._offset + 1], self._offset)
+                    self._offset = self._offset + 1
+                else:
+                    address3 = FAILURE
+                    if self._offset > self._failure:
+                        self._failure = self._offset
+                        self._expected = []
+                    if self._offset == self._failure:
+                        self._expected.append('"("')
+                if address3 is not FAILURE:
+                    elements0.append(address3)
+                    address4 = FAILURE
+                    address4 = self._read__()
+                    if address4 is not FAILURE:
+                        elements0.append(address4)
+                        address5 = FAILURE
+                        index2 = self._offset
+                        address5 = self._read_Asterisk()
+                        if address5 is FAILURE:
+                            self._offset = index2
+                            address5 = self._read_Operand()
+                            if address5 is FAILURE:
+                                self._offset = index2
+                        if address5 is not FAILURE:
+                            elements0.append(address5)
+                            address6 = FAILURE
+                            remaining0, index3, elements1, address7 = 0, self._offset, [], True
+                            while address7 is not FAILURE:
+                                index4, elements2 = self._offset, []
+                                address8 = FAILURE
+                                address8 = self._read__()
+                                if address8 is not FAILURE:
+                                    elements2.append(address8)
+                                    address9 = FAILURE
+                                    chunk1 = None
+                                    if self._offset < self._input_size:
+                                        chunk1 = self._input[self._offset:self._offset + 1]
+                                    if chunk1 == ',':
+                                        address9 = TreeNode(self._input[self._offset:self._offset + 1], self._offset)
+                                        self._offset = self._offset + 1
+                                    else:
+                                        address9 = FAILURE
+                                        if self._offset > self._failure:
+                                            self._failure = self._offset
+                                            self._expected = []
+                                        if self._offset == self._failure:
+                                            self._expected.append('","')
+                                    if address9 is not FAILURE:
+                                        elements2.append(address9)
+                                        address10 = FAILURE
+                                        address10 = self._read__()
+                                        if address10 is not FAILURE:
+                                            elements2.append(address10)
+                                            address11 = FAILURE
+                                            index5 = self._offset
+                                            address11 = self._read_Asterisk()
+                                            if address11 is FAILURE:
+                                                self._offset = index5
+                                                address11 = self._read_Operand()
+                                                if address11 is FAILURE:
+                                                    self._offset = index5
+                                            if address11 is not FAILURE:
+                                                elements2.append(address11)
+                                            else:
+                                                elements2 = None
+                                                self._offset = index4
+                                        else:
+                                            elements2 = None
+                                            self._offset = index4
+                                    else:
+                                        elements2 = None
+                                        self._offset = index4
+                                else:
+                                    elements2 = None
+                                    self._offset = index4
+                                if elements2 is None:
+                                    address7 = FAILURE
+                                else:
+                                    address7 = TreeNode15(self._input[index4:self._offset], index4, elements2)
+                                    self._offset = self._offset
+                                if address7 is not FAILURE:
+                                    elements1.append(address7)
+                                    remaining0 -= 1
+                            if remaining0 <= 0:
+                                address6 = TreeNode(self._input[index3:self._offset], index3, elements1)
+                                self._offset = self._offset
+                            else:
+                                address6 = FAILURE
+                            if address6 is not FAILURE:
+                                elements0.append(address6)
+                                address12 = FAILURE
+                                chunk2 = None
+                                if self._offset < self._input_size:
+                                    chunk2 = self._input[self._offset:self._offset + 1]
+                                if chunk2 == ')':
+                                    address12 = TreeNode(self._input[self._offset:self._offset + 1], self._offset)
+                                    self._offset = self._offset + 1
+                                else:
+                                    address12 = FAILURE
+                                    if self._offset > self._failure:
+                                        self._failure = self._offset
+                                        self._expected = []
+                                    if self._offset == self._failure:
+                                        self._expected.append('")"')
+                                if address12 is not FAILURE:
+                                    elements0.append(address12)
+                                else:
+                                    elements0 = None
+                                    self._offset = index1
+                            else:
+                                elements0 = None
+                                self._offset = index1
+                        else:
+                            elements0 = None
+                            self._offset = index1
+                    else:
+                        elements0 = None
+                        self._offset = index1
+                else:
+                    elements0 = None
+                    self._offset = index1
+            else:
+                elements0 = None
+                self._offset = index1
+        else:
+            elements0 = None
+            self._offset = index1
+        if elements0 is None:
+            address0 = FAILURE
+        else:
+            address0 = self._actions.make_multiparam_calculation(self._input, index1, self._offset, elements0)
+            self._offset = self._offset
+        self._cache['MultiParamFunction'][index0] = (address0, self._offset)
+        return address0
+
+    def _read_MultiParamFunctionName(self):
+        address0, index0 = FAILURE, self._offset
+        cached = self._cache['MultiParamFunctionName'].get(index0)
+        if cached:
+            self._offset = cached[1]
+            return cached[0]
+        chunk0 = None
+        if self._offset < self._input_size:
+            chunk0 = self._input[self._offset:self._offset + 6]
+        if chunk0 is not None and chunk0.lower() == 'Concat'.lower():
+            address0 = self._actions.make_concat_operator(self._input, self._offset, self._offset + 6)
+            self._offset = self._offset + 6
+        else:
+            address0 = FAILURE
+            if self._offset > self._failure:
+                self._failure = self._offset
+                self._expected = []
+            if self._offset == self._failure:
+                self._expected.append('`Concat`')
+        self._cache['MultiParamFunctionName'][index0] = (address0, self._offset)
+        return address0
+
     def _read_Operand(self):
         address0, index0 = FAILURE, self._offset
         cached = self._cache['Operand'].get(index0)
@@ -1373,7 +1582,7 @@ class Grammar(object):
         if elements0 is None:
             address0 = FAILURE
         else:
-            address0 = TreeNode14(self._input[index1:self._offset], index1, elements0)
+            address0 = TreeNode16(self._input[index1:self._offset], index1, elements0)
             self._offset = self._offset
         self._cache['Semicolon'][index0] = (address0, self._offset)
         return address0

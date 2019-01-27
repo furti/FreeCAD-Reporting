@@ -244,6 +244,21 @@ def emptyResultShouldNotThrowOnFunction():
     assert result == []
 
 
+def concatFunction():
+    result = executeStatement(
+        "Select concat(tag, ' ', role) From document")
+
+    assert result == [['inside wall'], ['living window'], ['living space'],
+                      ['bedroom space'], ['bedroom space'], ['something space'], [' ']]
+
+def concatFunctionInGroupBy():
+    result = executeStatement(
+        "Select concat(tag, ' ', role), count(*) From document Group By concat(tag, ' ', role)")
+
+    assert result == [['inside wall', 1], ['living window', 1], ['living space', 1],
+                      ['bedroom space', 2], ['something space', 1], [' ', 1]]
+
+
 def run():
     statementShouldParseWithDifferentStyles()
     selectAsteriskFromDocument()
@@ -268,3 +283,5 @@ def run():
     invalidGroupByClauseShouldThrow()
     staticColumnAndFunction()
     emptyResultShouldNotThrowOnFunction()
+    concatFunction()
+    concatFunctionInGroupBy()

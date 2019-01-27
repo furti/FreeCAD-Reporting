@@ -13,11 +13,13 @@ grammar sql
 
     WhereClause <- __ `Where` __ BooleanExpression %prepare_where_clause
 
-    GroupByClause <- __ `Group By` __ (Operand (_ "," _ Operand)* ) %prepare_group_by_clause
+    GroupByClause <- __ `Group By` __ (GroupByOperand (_ "," _ GroupByOperand)* ) %prepare_group_by_clause
 
     Columns <- (Column (_ "," _ Column)*) %prepare_columns
 
-    Column <- Asterisk / Function / Operand
+    Column <- Asterisk / MultiParamFunction / Function / Operand
+
+    GroupByOperand <- MultiParamFunction / Operand
     
     # Clauses End
 
@@ -50,6 +52,11 @@ grammar sql
         / `Count` %make_count_operator 
         / `Min` %make_min_operator 
         / `Max` %make_max_operator
+
+    MultiParamFunction <- MultiParamFunctionName _ "(" _ (Asterisk / Operand) 
+                          (_ "," _ (Asterisk / Operand))* ")" %make_multiparam_calculation
+
+    MultiParamFunctionName <- `Concat` %make_concat_operator
 
     # Functions End
 

@@ -339,6 +339,9 @@ class CalculationExtractor(object):
     def __str__(self):
         return '%s' % (self.calculation)
 
+    def __eq__(self, obj):
+        return isinstance(obj, CalculationExtractor) and self.calculation == obj.calculation
+
 
 class Reference(object):
     def __init__(self, value):
@@ -501,6 +504,9 @@ class FunctionOperator(object):
 
 
 class SumFunctionOperator(FunctionOperator):
+    def __init__(self):
+        self.grouping = True
+
     def execute(self, left, right):
         if left is None:
             return right
@@ -513,8 +519,14 @@ class SumFunctionOperator(FunctionOperator):
     def __str__(self):
         return 'SUM'
 
+    def __eq__(self, obj):
+        return isinstance(obj, SumFunctionOperator)
+
 
 class CountFunctionOperator(FunctionOperator):
+    def __init__(self):
+        self.grouping = True
+
     def execute(self, left, right):
         if left is None:
             return 1
@@ -527,8 +539,14 @@ class CountFunctionOperator(FunctionOperator):
     def __str__(self):
         return 'COUNT'
 
+    def __eq__(self, obj):
+        return isinstance(obj, CountFunctionOperator)
+
 
 class MinFunctionOperator(FunctionOperator):
+    def __init__(self):
+        self.grouping = True
+
     def execute(self, left, right):
         if left is None:
             return right
@@ -544,8 +562,14 @@ class MinFunctionOperator(FunctionOperator):
     def __str__(self):
         return 'MIN'
 
+    def __eq__(self, obj):
+        return isinstance(obj, MinFunctionOperator)
+
 
 class MaxFunctionOperator(FunctionOperator):
+    def __init__(self):
+        self.grouping = True
+
     def execute(self, left, right):
         if left is None:
             return right
@@ -561,12 +585,39 @@ class MaxFunctionOperator(FunctionOperator):
     def __str__(self):
         return 'MAX'
 
+    def __eq__(self, obj):
+        return isinstance(obj, MaxFunctionOperator)
+
+
+class ConcatFunctionOperator(FunctionOperator):
+    def __init__(self):
+        self.grouping = False
+
+    def execute(self, left, rightValues):
+        if rightValues is None or len(rightValues) == 0:
+            return ''
+
+        result = ''
+
+        for value in rightValues:
+            if value is not None:
+                result += str(value)
+
+        return result
+
+    def __str__(self):
+        return 'CONCAT'
+
+    def __eq__(self, obj):
+        return isinstance(obj, ConcatFunctionOperator)
+
 
 class Calculation(object):
     def __init__(self, operator, dataExtractor, name):
         self.operator = operator
         self.dataExtractor = dataExtractor
         self.name = name
+        self.grouping = operator.grouping
 
     def execute(self, o, currentValue):
         value = self.dataExtractor.extract(o)
@@ -575,6 +626,37 @@ class Calculation(object):
 
     def __str__(self):
         return '%s(%s)' % (self.operator, self.dataExtractor)
+
+    def __eq__(self, obj):
+        return isinstance(obj, Calculation) and self.operator == obj.operator and self.dataExtractor == obj.dataExtractor
+
+
+class MultiParamCalculation(object):
+    def __init__(self, operator, dataExtractors, name):
+        self.operator = operator
+        self.dataExtractors = dataExtractors
+        self.name = name
+        self.grouping = operator.grouping
+
+    def execute(self, o, currentValue):
+        values = [dataExtractor.extract(o)
+                  for dataExtractor in self.dataExtractors]
+
+        return self.operator.execute(currentValue, values)
+
+    def __str__(self):
+        return '%s(%s)' % (self.operator, [str(extractor) for extractor in self.dataExtractors])
+
+    def __eq__(self, obj):
+        if not isinstance(obj, MultiParamCalculation) or not self.operator == obj.operator:
+            return False
+
+        for dataExtractor in self.dataExtractors:
+            if not dataExtractor in obj.dataExtractors:
+                return False
+
+        return True
+
 # Functions End
 
 
@@ -609,10 +691,24 @@ def findExtractor(element):
     if isinstance(element, Reference):
         return (ReferenceExtractor(element), element.value, False)
 
-    if isinstance(element, Calculation):
-        return (CalculationExtractor(element), element.name, True)
+    if isinstance(element, Calculation) or isinstance(element, MultiParamCalculation):
+        return (CalculationExtractor(element), element.name, element.grouping)
 
     return (None, None, None)
+
+
+def findExtractors(elements):
+    extractors = []
+
+    for element in elements:
+        extractor = findExtractor(element)
+
+        if extractor[0] is not None:
+            extractors.append(extractor)
+        elif hasattr(element, 'elements'):
+            extractors.extend(findExtractors(element.elements))
+
+    return extractors
 
 
 def extractColumns(elements):
@@ -766,6 +862,9 @@ class ParserActions(object):
     def make_max_operator(self, input, start, end):
         return MaxFunctionOperator()
 
+    def make_concat_operator(self, input, start, end):
+        return ConcatFunctionOperator()
+
     def make_calculation(self, input, start, end, elements):
         operator = findFunctionOperator(elements)
 
@@ -774,6 +873,13 @@ class ParserActions(object):
 
             if extractor[0] is not None:
                 return Calculation(operator, extractor[0], input[start:end])
+
+    def make_multiparam_calculation(self, input, start, end, elements):
+        operator = findFunctionOperator(elements)
+
+        extractors = findExtractors(elements)
+
+        return MultiParamCalculation(operator, [extractor[0] for extractor in extractors], input[start:end])
 
 
 class SqlParser(object):
