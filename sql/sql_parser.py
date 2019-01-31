@@ -184,6 +184,38 @@ class Column(object):
         return self.dataExtractor == obj.dataExtractor
 
 
+class GroupedLists(object):
+    def __init__(self):
+        self.groups = [
+            #(key, list),...
+        ]
+
+    def append(self, key, o):
+        matchingGroups = [group for group in self.groups if group[0] == key]
+        groupList = None
+
+        if len(matchingGroups) == 0:
+            groupList = []
+
+            self.groups.append((key, groupList))
+        else:
+            groupList = matchingGroups[0][1]
+
+        groupList.append(o)
+
+    def toGroupedList(self):
+        groupedList = []
+
+        for group in self.groups:
+            key = group[0]
+            value = group[1]
+
+            logger.debug('Group %s:%s', (key, value))
+            groupedList.append(value)
+
+        return groupedList
+
+
 class GroupByClause(object):
     def __init__(self, columns):
         self.columns = columns
@@ -199,23 +231,14 @@ class GroupByClause(object):
                     'Can not use * in group by clause')
 
     def execute(self, objectList):
-        groups = {}
+        groups = GroupedLists()
 
         for o in objectList:
             keys = self.extractColumns(o)
 
-            if not keys in groups:
-                groups[keys] = []
+            groups.append(keys, o)
 
-            groups[keys].append(o)
-
-        groupedList = []
-
-        for key, group in groups.items():
-            logger.debug('Group %s:%s', (key, [o for o in group]))
-            groupedList.append([o for o in group])
-
-        return groupedList
+        return groups.toGroupedList()
 
     def extractColumns(self, o):
         return tuple([column.execute(o) for column in self.columns])

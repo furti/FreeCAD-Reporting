@@ -2,21 +2,24 @@ from sql import sql_parser
 
 
 class DocumentObject(object):
-    def __init__(self, name, tag, role, num):
+    def __init__(self, name, tag, role, num, list=None):
         self.name = name
         self.tag = tag
         self.role = role
         self.num = num
+        self.list = list
 
     def __str__(self):
         return 'name: %s, tag: %s, role: %s, num: %s' % (self.name, self.tag, self.role, self.num)
 
+list1 = ['list1']
+list2 = ['list2']
 
-wall = DocumentObject('Wall', 'inside', 'wall', 1)
-window = DocumentObject('Window', 'living', 'window', 2)
-space = DocumentObject('Space', 'living', 'space', 3)
-space001 = DocumentObject('Space001', 'bedroom', 'space', 4)
-space002 = DocumentObject('Space002', 'bedroom', 'space', 5)
+wall = DocumentObject('Wall', 'inside', 'wall', 1, list1)
+window = DocumentObject('Window', 'living', 'window', 2, list1)
+space = DocumentObject('Space', 'living', 'space', 3, list2)
+space001 = DocumentObject('Space001', 'bedroom', 'space', 4, list1)
+space002 = DocumentObject('Space002', 'bedroom', 'space', 5, list2)
 space003 = DocumentObject('Space003', 'something', 'space', 6)
 norole = DocumentObject('Something', None, None, None)
 
@@ -258,6 +261,12 @@ def concatFunctionInGroupBy():
     assert result == [['inside wall', 1], ['living window', 1], ['living space', 1],
                       ['bedroom space', 2], ['something space', 1], [' ', 1]]
 
+def unhashableTypeInGroupBy():
+    result = executeStatement(
+        "Select list, count(*) From document Where list IS NOT NULL Group By list")
+
+    assert result == [[list1, 3], [list2, 2]]
+
 
 def run():
     statementShouldParseWithDifferentStyles()
@@ -285,3 +294,4 @@ def run():
     emptyResultShouldNotThrowOnFunction()
     concatFunction()
     concatFunctionInGroupBy()
+    unhashableTypeInGroupBy()
