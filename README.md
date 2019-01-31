@@ -187,7 +187,10 @@ You can also use functions to aggregate data for a given attribute. Supported fu
  - **Min**: Gets the minimum Value of the given Attribute
  - **Max**: Gets the maximum Value of the given Attribute
 
-Without a group by clause, it is not possible to mix single attributes and functions in a select statements. The only exceptions are static values (E.g. "Select 'Number of objects', Count(*).."). 
+There are also some non grouping functions. These can be used like normal references or static values:
+ - **Concat**: Takes a comma separated list of references or static values and combines them to a single string value. (e.g. Concat(Label, ': ', Area))
+
+Without a group by clause, it is not possible to mix references and aggregating functions in a select statements. The only exceptions are static values (E.g. "Select 'Number of objects', Count(*).."). 
 Only a single row will be returned for such a query. See ```Group by``` for more details on mixing attributes and functions.
 
 ### From \<Source>
@@ -233,7 +236,7 @@ Group By Tag
 
 What does this query do? When it runs it groups all the spaces in the document by their ```Tag``` Attribute. So wen we have spaces with 3 different tags, we will get 3 rows when executing the statement. Each row will contain the Tag, and the sum of the area of all spaces for the given group.
 
-You can use multiple attributes and even static values like numbers or text in the Group By clause. But the select part can only contain single attributes, that are also referenced in the group by clause. Functions in the select clause can reference other attributes too.
+You can use multiple attributes non grouping functions and even static values like numbers or text in the Group By clause. But the select part can only contain single attributes, that are also referenced in the group by clause. Functions in the select clause can reference other attributes too.
 
 e.g. this would be a invalid statement
 
