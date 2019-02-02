@@ -19,7 +19,7 @@ grammar sql
 
     Column <- Asterisk / MultiParamFunction / Function / Operand
 
-    GroupByOperand <- MultiParamFunction / Operand
+    GroupByOperand <- MultiParamFunction / Function / Operand
     
     # Clauses End
 
@@ -52,6 +52,7 @@ grammar sql
         / `Count` %make_count_operator 
         / `Min` %make_min_operator 
         / `Max` %make_max_operator
+        / `Type` %make_type_operator
 
     MultiParamFunction <- MultiParamFunctionName _ "(" _ (Asterisk / Operand) 
                           (_ "," _ (Asterisk / Operand))* ")" %make_multiparam_calculation

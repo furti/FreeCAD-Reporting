@@ -1,6 +1,10 @@
+import re
+
 from itertools import groupby
 from . import sql_grammar
 from report_utils import logger
+
+TYPE_REGEX = re.compile("<class '([^']+)'>")
 
 
 def printElements(elements, intent=''):
@@ -635,6 +639,29 @@ class ConcatFunctionOperator(FunctionOperator):
         return isinstance(obj, ConcatFunctionOperator)
 
 
+class TypeFunctionOperator(FunctionOperator):
+    def __init__(self):
+        self.grouping = False
+
+    def execute(self, left, right):
+        toUse = right
+
+        if hasattr(right, 'Proxy'):
+            toUse = right.Proxy
+
+        typeString = str(type(toUse))
+
+        match = TYPE_REGEX.match(typeString)
+
+        return match.group(1)
+
+    def __str__(self):
+        return 'TYPE'
+
+    def __eq__(self, obj):
+        return isinstance(obj, TypeFunctionOperator)
+
+
 class Calculation(object):
     def __init__(self, operator, dataExtractor, name):
         self.operator = operator
@@ -887,6 +914,9 @@ class ParserActions(object):
 
     def make_concat_operator(self, input, start, end):
         return ConcatFunctionOperator()
+
+    def make_type_operator(self, input, start, end):
+        return TypeFunctionOperator()
 
     def make_calculation(self, input, start, end, elements):
         operator = findFunctionOperator(elements)

@@ -189,6 +189,7 @@ You can also use functions to aggregate data for a given attribute. Supported fu
 
 There are also some non grouping functions. These can be used like normal references or static values:
  - **Concat**: Takes a comma separated list of references or static values and combines them to a single string value. (e.g. Concat(Label, ': ', Area))
+ - **Type**: Returns the type of the given object. When the object has a "Proxy" Attribute, the type of the Proxy will be returned.
 
 Without a group by clause, it is not possible to mix references and aggregating functions in a select statements. The only exceptions are static values (E.g. "Select 'Number of objects', Count(*).."). 
 Only a single row will be returned for such a query. See ```Group by``` for more details on mixing attributes and functions.

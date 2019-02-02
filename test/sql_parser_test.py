@@ -1,6 +1,10 @@
 from sql import sql_parser
 
 
+class ProxyObject(object):
+    pass
+
+
 class DocumentObject(object):
     def __init__(self, name, tag, role, num, list=None):
         self.name = name
@@ -12,6 +16,7 @@ class DocumentObject(object):
     def __str__(self):
         return 'name: %s, tag: %s, role: %s, num: %s' % (self.name, self.tag, self.role, self.num)
 
+
 list1 = ['list1']
 list2 = ['list2']
 
@@ -22,6 +27,8 @@ space001 = DocumentObject('Space001', 'bedroom', 'space', 4, list1)
 space002 = DocumentObject('Space002', 'bedroom', 'space', 5, list2)
 space003 = DocumentObject('Space003', 'something', 'space', 6)
 norole = DocumentObject('Something', None, None, None)
+
+norole.Proxy = ProxyObject()
 
 documentObjects = [
     wall,
@@ -58,7 +65,7 @@ def executeStatement(statementString, doPrint=True, includeStatement=False):
 
     if doPrint:
         for columns in result:
-            print([element.__str__() for element in columns])
+            print([str(element) for element in columns])
 
     if includeStatement:
         return (result, statement)
@@ -254,6 +261,7 @@ def concatFunction():
     assert result == [['inside wall'], ['living window'], ['living space'],
                       ['bedroom space'], ['bedroom space'], ['something space'], [' ']]
 
+
 def concatFunctionInGroupBy():
     result = executeStatement(
         "Select concat(tag, ' ', role), count(*) From document Group By concat(tag, ' ', role)")
@@ -261,11 +269,20 @@ def concatFunctionInGroupBy():
     assert result == [['inside wall', 1], ['living window', 1], ['living space', 1],
                       ['bedroom space', 2], ['something space', 1], [' ', 1]]
 
+
 def unhashableTypeInGroupBy():
     result = executeStatement(
         "Select list, count(*) From document Where list IS NOT NULL Group By list")
 
     assert result == [[list1, 3], [list2, 2]]
+
+
+def typeFunction():
+    result = executeStatement(
+        "Select type(*) From document")
+
+    assert result == [['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.DocumentObject'],
+                      ['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.ProxyObject']]
 
 
 def run():
@@ -295,3 +312,4 @@ def run():
     concatFunction()
     concatFunctionInGroupBy()
     unhashableTypeInGroupBy()
+    typeFunction()
