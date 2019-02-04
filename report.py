@@ -85,6 +85,7 @@ class ReportSpreadsheet(object):
     def __init__(self, spreadsheet):
         self.spreadsheet = spreadsheet
         self.lineNumber = 1
+        self.maxColumn = None
 
     def clearAll(self):
         self.spreadsheet.clearAll()
@@ -107,6 +108,9 @@ class ReportSpreadsheet(object):
                 lineRange('A', lastColumnCell, self.lineNumber))
 
         self.lineNumber += 1
+        self.updateMaxColumn('A')
+
+        self.clearLine(self.lineNumber)
 
     def printColumnLabels(self, columnLabels):
         spreadsheet = self.spreadsheet
@@ -123,6 +127,9 @@ class ReportSpreadsheet(object):
             lineRange('A', columnName, self.lineNumber), 'bold', 'add')
 
         self.lineNumber += 1
+        self.updateMaxColumn(columnName)
+
+        self.clearLine(self.lineNumber)
 
     def printRows(self, rows, skipRowsAfter=False, printResultInBold=False):
         lineNumberBefore = self.lineNumber
@@ -144,8 +151,15 @@ class ReportSpreadsheet(object):
             self.spreadsheet.setStyle(
                 cellRange('A', lineNumberBefore, columnName, self.lineNumber), 'bold', 'add')
 
+        self.clearLine(self.lineNumber)
+
         if not skipRowsAfter:
+            self.clearLine(self.lineNumber + 1)
+            self.clearLine(self.lineNumber + 2)
+
             self.lineNumber += 2
+
+        self.updateMaxColumn(columnName)
 
     def setCellValue(self, cell, value):
         if value is None:
@@ -165,6 +179,56 @@ class ReportSpreadsheet(object):
 
     def recompute(self):
         self.spreadsheet.recompute()
+
+    def updateMaxColumn(self, columnName):
+        if self.maxColumn is None:
+            self.maxColumn = columnName
+        else:
+            actualIndex = COLUMN_NAMES.index(self.maxColumn)
+            columnIndex = COLUMN_NAMES.index(columnName)
+
+            if actualIndex < columnIndex:
+                self.maxColumn = columnName
+
+    def clearUnusedCells(self, column, line):
+        if line is not None and line > self.lineNumber:
+            for lineNumberToDelete in range(line, self.lineNumber, -1):
+                self.clearLine(lineNumberToDelete)
+
+        if column is not None:
+            columnIndex = COLUMN_NAMES.index(column)
+            maxColumnIndex = COLUMN_NAMES.index(self.maxColumn)
+
+            if columnIndex > maxColumnIndex:
+                for columnIndexToDelete in range(columnIndex, maxColumnIndex, -1):
+                    self.clearColumn(COLUMN_NAMES[columnIndexToDelete], line)
+
+    def clearLine(self, lineNumberToDelete):
+        if DEBUG:
+            print('Clear line %s' % (lineNumberToDelete))
+
+        column = None
+
+        while column is None or column != self.maxColumn:
+            column = nextColumnName(column)
+            cellName = buildCellName(column, lineNumberToDelete)
+
+            if DEBUG:
+                print('    Clear cell %s' % (cellName))
+
+            self.spreadsheet.clear(cellName)
+
+    def clearColumn(self, columnToDelete, maxLineNumber):
+        if DEBUG:
+            print('Clear column %s' % (columnToDelete))
+
+        for lineNumber in range(1, maxLineNumber):
+            cellName = buildCellName(columnToDelete, lineNumber + 1)
+
+            if DEBUG:
+                print('    Clear cell %s' % (cellName))
+
+            self.spreadsheet.clear(cellName)
 
 
 class ReportEntryWidget(QGroupBox):
@@ -327,6 +391,9 @@ class Report():
             # ReportStatement, ...
         ]
 
+        self.maxColumn = None
+        self.maxLine = None
+
     def execute(self, fp):
         # if fp.SkipComputing:
         #     return
@@ -336,7 +403,6 @@ class Report():
                 'No spreadsheet attached to %s. Could not recompute result' % (fp.Label))
 
         spreadsheet = ReportSpreadsheet(fp.Result)
-        spreadsheet.clearAll()
 
         lineNumber = 1
 
@@ -352,6 +418,11 @@ class Report():
 
             spreadsheet.printRows(
                 rows, statement.skipRowsAfter, statement.printResultInBold)
+
+        spreadsheet.clearUnusedCells(self.maxColumn, self.maxLine)
+
+        self.maxColumn = spreadsheet.maxColumn
+        self.maxLine = spreadsheet.lineNumber
 
         spreadsheet.recompute()
 
@@ -373,11 +444,28 @@ class Report():
             fileObject.close()
 
     def __getstate__(self):
-        return [statement.serializeState() for statement in self.statements]
+        state = ['VERSION:1']
+
+        state.append([statement.serializeState()
+                      for statement in self.statements])
+        state.append(self.maxColumn)
+        state.append(self.maxLine)
+
+        return state
 
     def __setstate__(self, state):
-        self.statements = [ReportStatement.deserializeState(
-            serializedState) for serializedState in state]
+        if state[0] == 'VERSION:1':
+            savedStatements = state[1]
+            self.maxColumn = state[2]
+            self.maxLine = state[3]
+
+            self.statements = [ReportStatement.deserializeState(
+                serializedState) for serializedState in savedStatements]
+        else:
+            self.statements = [ReportStatement.deserializeState(
+                serializedState) for serializedState in state]
+            self.maxColumn = None
+            self.maxLine = None
 
         return None
 
