@@ -381,11 +381,7 @@ class Report():
     def __init__(self, obj, fileObject=None):
         obj.Proxy = self
 
-        # obj.addProperty("App::PropertyBool", "SkipComputing", "Settings",
-        #                 "When true no calculation of this report is performed, even when the document gets recomputed").SkipComputing = False
-
-        obj.addProperty("App::PropertyLink", "Result", "Settings",
-                        "The spreadsheet to print the results to")
+        self.setProperties(obj)
 
         self.statements = [
             # ReportStatement, ...
@@ -394,9 +390,23 @@ class Report():
         self.maxColumn = None
         self.maxLine = None
 
+    def setProperties(self, obj):
+        pl = obj.PropertiesList
+
+        if not 'Result' in pl:
+            obj.addProperty("App::PropertyLink", "Result", "Settings",
+                            "The spreadsheet to print the results to")
+
+        if not 'SkipComputing' in pl:
+            obj.addProperty("App::PropertyBool", "SkipComputing", "Settings",
+                            "When true no calculation of this report is performed, even when the document gets recomputed").SkipComputing = False
+
+    def onDocumentRestored(self, obj):
+        self.setProperties(obj)
+
     def execute(self, fp):
-        # if fp.SkipComputing:
-        #     return
+        if fp.SkipComputing:
+            return
 
         if not fp.Result:
             FreeCAD.Console.PrintError(
