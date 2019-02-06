@@ -6,6 +6,7 @@ import json
 from FreeCAD import Units
 from pivy import coin
 from report_utils.resource_utils import uiPath
+from report_utils import logger
 from sql import freecad_sql_parser
 
 from PySide2.QtWidgets import QTableWidgetItem
@@ -19,8 +20,6 @@ from PySide2.QtWidgets import QCheckBox
 SQL_PARSER = freecad_sql_parser.newParser()
 
 COLUMN_NAMES = list(string.ascii_uppercase)
-
-DEBUG = True
 
 
 def statementsToDict(reportStatements):
@@ -171,9 +170,8 @@ class ReportSpreadsheet(object):
 
         convertedValue = literalText(convertedValue)
 
-        if DEBUG:
-            print('set %s to %s for %s' %
-                  (cell, convertedValue, self.spreadsheet))
+        logger.debug('set %s to %s for %s',
+                     (cell, convertedValue, self.spreadsheet))
 
         self.spreadsheet.set(cell, convertedValue)
 
@@ -204,8 +202,7 @@ class ReportSpreadsheet(object):
                     self.clearColumn(COLUMN_NAMES[columnIndexToDelete], line)
 
     def clearLine(self, lineNumberToDelete):
-        if DEBUG:
-            print('Clear line %s' % (lineNumberToDelete))
+        logger.debug('Clear line %s', (lineNumberToDelete))
 
         column = None
 
@@ -213,20 +210,17 @@ class ReportSpreadsheet(object):
             column = nextColumnName(column)
             cellName = buildCellName(column, lineNumberToDelete)
 
-            if DEBUG:
-                print('    Clear cell %s' % (cellName))
+            logger.debug('    Clear cell %s', (cellName))
 
             self.spreadsheet.clear(cellName)
 
     def clearColumn(self, columnToDelete, maxLineNumber):
-        if DEBUG:
-            print('Clear column %s' % (columnToDelete))
+        logger.debug('Clear column %s', (columnToDelete))
 
         for lineNumber in range(1, maxLineNumber):
             cellName = buildCellName(columnToDelete, lineNumber + 1)
 
-            if DEBUG:
-                print('    Clear cell %s' % (cellName))
+            logger.debug('    Clear cell %s', (cellName))
 
             self.spreadsheet.clear(cellName)
 
@@ -348,9 +342,8 @@ class ReportStatement(object):
         self.skipColumnNames = skipColumnNames
         self.printResultInBold = printResultInBold
 
-        if DEBUG:
-            print('parsed statement %s' % (plainTextStatement))
-            print('to %s' % (self.statement))
+        logger.debug('parsed statement %s', (plainTextStatement))
+        logger.debug('to %s', (self.statement))
 
     def execute(self):
         return self.statement.execute()

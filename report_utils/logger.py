@@ -1,11 +1,12 @@
-DEBUG = True
+from report_utils import preferences
 
 
-def debug(messagePattern, args=None):
-    if not DEBUG:
+def debug(messagePattern, args=None, compact=True):
+    if not preferences.debug():
         return
 
-    print('\n')
+    if not compact:
+        print('\n')
 
     if args is None:
         print(messagePattern)

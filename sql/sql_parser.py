@@ -214,7 +214,7 @@ class GroupedLists(object):
             key = group[0]
             value = group[1]
 
-            logger.debug('Group %s:%s', (key, value))
+            logger.debug('Group %s:%s', (key, value), compact=False)
             groupedList.append(value)
 
         return groupedList

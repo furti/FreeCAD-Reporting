@@ -26,3 +26,8 @@ class ReportingWorkbench (FreeCADGui.Workbench):
 
 
 FreeCADGui.addWorkbench(ReportingWorkbench())
+
+# Setup Preferences
+from report_utils import preferences
+
+preferences.setupMissingParams()
