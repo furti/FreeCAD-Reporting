@@ -285,6 +285,11 @@ class WhereClause(object):
         return 'Where %s' % (self.booleanExpression)
 
 
+class AsClause(object):
+    def __init__(self, name):
+        self.name = name
+
+
 class IdentityExtractor(object):
     def extract(self, o):
         return o
@@ -761,7 +766,32 @@ def findExtractors(elements):
     return extractors
 
 
-def extractColumns(elements):
+def findColumns(elements):
+    columns = []
+
+    for element in elements:
+        if isinstance(element, Column):
+            columns.append(element)
+        elif hasattr(element, 'elements'):
+            columns.extend(findColumns(element.elements))
+
+    return columns
+
+
+def findLiteral(elements):
+    for element in elements:
+        if isinstance(element, str):
+            return element
+        elif hasattr(element, 'elements'):
+            literal = findLiteral(element.elements)
+
+            if literal is not None:
+                return literal
+
+    return None
+
+
+def extractGroupByColumns(elements):
     columns = []
 
     for element in elements:
@@ -770,9 +800,47 @@ def extractColumns(elements):
         if extractor is not None:
             columns.append(Column(name, extractor, grouping))
         elif hasattr(element, 'elements'):
-            columns.extend(extractColumns(element.elements))
+            columns.extend(extractGroupByColumns(element.elements))
 
     return columns
+
+
+def findAsClause(elements):
+    for element in elements:
+        if isinstance(element, AsClause):
+            return element
+        elif hasattr(element, 'elements'):
+            asClause = findAsClause(element.elements)
+
+            if asClause is not None:
+                return asClause
+
+    return None
+
+
+def extractColumn(elements):
+    column = None
+
+    for element in elements:
+        extractor, name, grouping = findExtractor(element)
+
+        if extractor is not None:
+            column = Column(name, extractor, grouping)
+
+            break
+        elif hasattr(element, 'elements'):
+            column = findColumns(element.elements)
+
+            if column is not None:
+                break
+
+    if column is not None:
+        asClause = findAsClause(elements)
+
+        if asClause is not None:
+            column.columnName = asClause.name
+
+    return column
 
 
 def prepareSelectStatement(statement, elements):
@@ -801,9 +869,12 @@ class ParserActions(object):
         return Reference(value)
 
     def prepare_columns(self, input, start, end, elements):
-        columns = extractColumns(elements)
+        columns = findColumns(elements)
 
         return Columns(columns)
+
+    def make_column(self, input, start, end, elements):
+        return extractColumn(elements)
 
     def prepare_from_clause(self, input, start, end, elements):
         reference = findReference(elements)
@@ -816,9 +887,14 @@ class ParserActions(object):
         return WhereClause(booleanExpression)
 
     def prepare_group_by_clause(self, input, start, end, elements):
-        columns = extractColumns(elements)
+        columns = extractGroupByColumns(elements)
 
         return GroupByClause(columns)
+
+    def prepare_as_clause(self, input, start, end, elements):
+        literal = findLiteral(elements)
+
+        return AsClause(literal)
 
     def make_boolean_comparison(self, input, start, end, elements):
         leftDataExctractor = findExtractor(elements[0])

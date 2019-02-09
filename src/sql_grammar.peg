@@ -17,9 +17,11 @@ grammar sql
 
     Columns <- (Column (_ "," _ Column)*) %prepare_columns
 
-    Column <- Asterisk / MultiParamFunction / Function / Operand
+    Column <- (Asterisk / MultiParamFunction / Function / Operand) AsClause? %make_column
 
     GroupByOperand <- MultiParamFunction / Function / Operand
+
+    AsClause <- __ `As` __ Literal %prepare_as_clause
     
     # Clauses End
 

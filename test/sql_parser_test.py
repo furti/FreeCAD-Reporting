@@ -284,6 +284,15 @@ def typeFunction():
     assert result == [['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.DocumentObject'],
                       ['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.ProxyObject']]
 
+def renamedColumnNamesShouldBeCorrect():
+    result, statement = executeStatement(
+        "Select name As 'Something', 42 As 'Number','literal' From document", includeStatement=True)
+
+    columnNames = statement.getColumnNames()
+
+    print('columnNames %s' % (columnNames))
+
+    assert columnNames == ['Something', 'Number', 'literal']
 
 def run():
     statementShouldParseWithDifferentStyles()
@@ -313,3 +322,4 @@ def run():
     concatFunctionInGroupBy()
     unhashableTypeInGroupBy()
     typeFunction()
+    renamedColumnNamesShouldBeCorrect()
