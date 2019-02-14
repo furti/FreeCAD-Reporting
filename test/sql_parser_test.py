@@ -284,6 +284,7 @@ def typeFunction():
     assert result == [['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.DocumentObject'],
                       ['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.DocumentObject'], ['test.sql_parser_test.ProxyObject']]
 
+
 def renamedColumnNamesShouldBeCorrect():
     result, statement = executeStatement(
         "Select name As 'Something', 42 As 'Number','literal' From document", includeStatement=True)
@@ -293,6 +294,22 @@ def renamedColumnNamesShouldBeCorrect():
     print('columnNames %s' % (columnNames))
 
     assert columnNames == ['Something', 'Number', 'literal']
+
+
+def simpleCalculation():
+    result = executeStatement(
+        "Select 4 * 2, 8 + 1, 6 / 2, 5 - 3 From document")
+
+    assert result == [[8, 9, 3, 2], [8, 9, 3, 2], [8, 9, 3, 2], [
+        8, 9, 3, 2], [8, 9, 3, 2], [8, 9, 3, 2], [8, 9, 3, 2]]
+
+
+def referenceCalculation():
+    result = executeStatement(
+        "Select num * 2 From document")
+
+    assert result == [[2], [4], [6], [8], [10], [12], [None]]
+
 
 def run():
     statementShouldParseWithDifferentStyles()
@@ -323,3 +340,7 @@ def run():
     unhashableTypeInGroupBy()
     typeFunction()
     renamedColumnNamesShouldBeCorrect()
+    simpleCalculation()
+    referenceCalculation()
+
+    print('\nsuccess')

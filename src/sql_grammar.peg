@@ -63,8 +63,20 @@ grammar sql
 
     # Functions End
 
+    # Arithmetic
+    ArithmeticOperand <- Number / Reference
+
+    ArithmeticOperation <- ArithmeticOperand __ ArithmeticOperator __ ArithmeticOperand %make_arithmetic_operation
+
+    ArithmeticOperator <- '*' %make_multiply_arithmetic_operator
+        / '/' %make_divide_arithmetic_operator
+        / '+' %make_add_arithmetic_operator
+        / '-' %make_subtract_arithmetic_operator
+
+    # Arithmetic End
+
     # Basics
-    Operand <- Null / Number / Literal / Reference
+    Operand <- ArithmeticOperation / Null / Literal / ArithmeticOperand
 
     Reference <- [a-zA-Z0-9]+ %make_reference
 

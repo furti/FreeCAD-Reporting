@@ -203,6 +203,21 @@ By default the name of a column will be the literal text of the expression. E.g.
 
 Sometimes this is not what you want. Especially for columns containing a function. You can use the ```AS``` clause to give a column a explicit name like we did with the ```sum(Attribute3)``` column above.
 
+#### Arithmetics
+
+You can use simple arithmetics inside a column. E.g.
+
+```sql
+Select Area / 2
+From document
+```
+
+The following operators are available:
+ - *: Multiplication
+ - /: Division
+ - +: Addition
+ - -: Subtraction
+
 ### From \<Source>
 
 The objects from the document you want to select.

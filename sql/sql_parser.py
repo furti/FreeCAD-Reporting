@@ -375,6 +375,23 @@ class CalculationExtractor(object):
         return isinstance(obj, CalculationExtractor) and self.calculation == obj.calculation
 
 
+class ArithmeticExtractor(object):
+    def __init__(self, arithmeticOperation):
+        self.arithmeticOperation = arithmeticOperation
+
+    def extract(self, o):
+        return self.arithmeticOperation.execute(o)
+
+    def resetState(self):
+        pass
+
+    def __str__(self):
+        return '%s' % (self.arithmeticOperation)
+
+    def __eq__(self, obj):
+        return isinstance(obj, ArithmeticExtractor) and self.arithmeticOperation == obj.arithmeticOperation
+
+
 class Reference(object):
     def __init__(self, value):
         self.value = value
@@ -434,6 +451,81 @@ class BooleanComparison(BooleanExpression):
 
     def __str__(self):
         return '(%s %s %s)' % (self.leftDataExtractor, self.comparisonOperator, self.rightDataExtractor)
+
+
+class ArithmeticOperation(BooleanExpression):
+    def __init__(self, leftDataExtractor, rightDataExtractor, arithmeticOperator):
+        self.leftDataExtractor = leftDataExtractor
+        self.rightDataExtractor = rightDataExtractor
+        self.arithmeticOperator = arithmeticOperator
+
+    def execute(self, o):
+        left = self.leftDataExtractor.extract(o)
+        right = self.rightDataExtractor.extract(o)
+
+        if left is None or right is None:
+            return None
+
+        return self.arithmeticOperator.calculate(left, right)
+
+    def __str__(self):
+        return '(%s %s %s)' % (self.leftDataExtractor, self.arithmeticOperator, self.rightDataExtractor)
+
+    def __eq__(self, obj):
+        if not isinstance(obj, ArithmeticOperation):
+            return False
+
+        if self.leftDataExtractor != obj.leftDataExtractor:
+            return False
+
+        if self.rightDataExtractor != obj.rightDataExtractor:
+            return False
+
+        return self.arithmeticOperator == obj.arithmeticOperator
+
+
+class MultiplyArithmeticOperator(object):
+    def calculate(self, left, right):
+        return left * right
+
+    def __str__(self):
+        return '*'
+
+    def __eq__(self, obj):
+        return isinstance(obj, MultiplyArithmeticOperator)
+
+
+class DivideArithmeticOperator(object):
+    def calculate(self, left, right):
+        return left / right
+
+    def __str__(self):
+        return '/'
+
+    def __eq__(self, obj):
+        return isinstance(obj, DivideArithmeticOperator)
+
+
+class AddArithmeticOperator(object):
+    def calculate(self, left, right):
+        return left + right
+
+    def __str__(self):
+        return '+'
+
+    def __eq__(self, obj):
+        return isinstance(obj, AddArithmeticOperator)
+
+
+class SubtractArithmeticOperator(object):
+    def calculate(self, left, right):
+        return left - right
+
+    def __str__(self):
+        return '-'
+
+    def __eq__(self, obj):
+        return isinstance(obj, SubtractArithmeticOperator)
 
 
 class GreaterThanOrEqualsComparisonOperator(object):
@@ -749,6 +841,9 @@ def findExtractor(element):
     if isinstance(element, Calculation) or isinstance(element, MultiParamCalculation):
         return (CalculationExtractor(element), element.name, element.grouping)
 
+    if isinstance(element, ArithmeticOperation):
+        return (ArithmeticExtractor(element), str(element), False)
+
     return (None, None, None)
 
 
@@ -933,6 +1028,28 @@ class ParserActions(object):
             firstExpression, rightExpression, booleanOperator)
 
         return expression
+
+    def make_arithmetic_operation(self, input, start, end, elements):
+        leftDataExctractor = findExtractor(elements[0])
+        arithmeticOperator = elements[2]
+        rightDataExtractor = findExtractor(elements[4])
+
+        operation = ArithmeticOperation(
+            leftDataExctractor[0], rightDataExtractor[0], arithmeticOperator)
+
+        return operation
+
+    def make_multiply_arithmetic_operator(self, input, start, end):
+        return MultiplyArithmeticOperator()
+
+    def make_divide_arithmetic_operator(self, input, start, end):
+        return DivideArithmeticOperator()
+
+    def make_add_arithmetic_operator(self, input, start, end):
+        return AddArithmeticOperator()
+
+    def make_subtract_arithmetic_operator(self, input, start, end):
+        return SubtractArithmeticOperator()
 
     def make_asterisk(self, input, start, end):
         return Asterisk()

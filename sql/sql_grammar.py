@@ -129,6 +129,14 @@ class TreeNode16(TreeNode):
 class TreeNode17(TreeNode):
     def __init__(self, text, offset, elements):
         super(TreeNode17, self).__init__(text, offset, elements)
+        self.ArithmeticOperand = elements[4]
+        self.__ = elements[3]
+        self.ArithmeticOperator = elements[2]
+
+
+class TreeNode18(TreeNode):
+    def __init__(self, text, offset, elements):
+        super(TreeNode18, self).__init__(text, offset, elements)
         self._ = elements[0]
 
 
@@ -1424,6 +1432,142 @@ class Grammar(object):
         self._cache['MultiParamFunctionName'][index0] = (address0, self._offset)
         return address0
 
+    def _read_ArithmeticOperand(self):
+        address0, index0 = FAILURE, self._offset
+        cached = self._cache['ArithmeticOperand'].get(index0)
+        if cached:
+            self._offset = cached[1]
+            return cached[0]
+        index1 = self._offset
+        address0 = self._read_Number()
+        if address0 is FAILURE:
+            self._offset = index1
+            address0 = self._read_Reference()
+            if address0 is FAILURE:
+                self._offset = index1
+        self._cache['ArithmeticOperand'][index0] = (address0, self._offset)
+        return address0
+
+    def _read_ArithmeticOperation(self):
+        address0, index0 = FAILURE, self._offset
+        cached = self._cache['ArithmeticOperation'].get(index0)
+        if cached:
+            self._offset = cached[1]
+            return cached[0]
+        index1, elements0 = self._offset, []
+        address1 = FAILURE
+        address1 = self._read_ArithmeticOperand()
+        if address1 is not FAILURE:
+            elements0.append(address1)
+            address2 = FAILURE
+            address2 = self._read___()
+            if address2 is not FAILURE:
+                elements0.append(address2)
+                address3 = FAILURE
+                address3 = self._read_ArithmeticOperator()
+                if address3 is not FAILURE:
+                    elements0.append(address3)
+                    address4 = FAILURE
+                    address4 = self._read___()
+                    if address4 is not FAILURE:
+                        elements0.append(address4)
+                        address5 = FAILURE
+                        address5 = self._read_ArithmeticOperand()
+                        if address5 is not FAILURE:
+                            elements0.append(address5)
+                        else:
+                            elements0 = None
+                            self._offset = index1
+                    else:
+                        elements0 = None
+                        self._offset = index1
+                else:
+                    elements0 = None
+                    self._offset = index1
+            else:
+                elements0 = None
+                self._offset = index1
+        else:
+            elements0 = None
+            self._offset = index1
+        if elements0 is None:
+            address0 = FAILURE
+        else:
+            address0 = self._actions.make_arithmetic_operation(self._input, index1, self._offset, elements0)
+            self._offset = self._offset
+        self._cache['ArithmeticOperation'][index0] = (address0, self._offset)
+        return address0
+
+    def _read_ArithmeticOperator(self):
+        address0, index0 = FAILURE, self._offset
+        cached = self._cache['ArithmeticOperator'].get(index0)
+        if cached:
+            self._offset = cached[1]
+            return cached[0]
+        index1 = self._offset
+        chunk0 = None
+        if self._offset < self._input_size:
+            chunk0 = self._input[self._offset:self._offset + 1]
+        if chunk0 == '*':
+            address0 = self._actions.make_multiply_arithmetic_operator(self._input, self._offset, self._offset + 1)
+            self._offset = self._offset + 1
+        else:
+            address0 = FAILURE
+            if self._offset > self._failure:
+                self._failure = self._offset
+                self._expected = []
+            if self._offset == self._failure:
+                self._expected.append('\'*\'')
+        if address0 is FAILURE:
+            self._offset = index1
+            chunk1 = None
+            if self._offset < self._input_size:
+                chunk1 = self._input[self._offset:self._offset + 1]
+            if chunk1 == '/':
+                address0 = self._actions.make_divide_arithmetic_operator(self._input, self._offset, self._offset + 1)
+                self._offset = self._offset + 1
+            else:
+                address0 = FAILURE
+                if self._offset > self._failure:
+                    self._failure = self._offset
+                    self._expected = []
+                if self._offset == self._failure:
+                    self._expected.append('\'/\'')
+            if address0 is FAILURE:
+                self._offset = index1
+                chunk2 = None
+                if self._offset < self._input_size:
+                    chunk2 = self._input[self._offset:self._offset + 1]
+                if chunk2 == '+':
+                    address0 = self._actions.make_add_arithmetic_operator(self._input, self._offset, self._offset + 1)
+                    self._offset = self._offset + 1
+                else:
+                    address0 = FAILURE
+                    if self._offset > self._failure:
+                        self._failure = self._offset
+                        self._expected = []
+                    if self._offset == self._failure:
+                        self._expected.append('\'+\'')
+                if address0 is FAILURE:
+                    self._offset = index1
+                    chunk3 = None
+                    if self._offset < self._input_size:
+                        chunk3 = self._input[self._offset:self._offset + 1]
+                    if chunk3 == '-':
+                        address0 = self._actions.make_subtract_arithmetic_operator(self._input, self._offset, self._offset + 1)
+                        self._offset = self._offset + 1
+                    else:
+                        address0 = FAILURE
+                        if self._offset > self._failure:
+                            self._failure = self._offset
+                            self._expected = []
+                        if self._offset == self._failure:
+                            self._expected.append('\'-\'')
+                    if address0 is FAILURE:
+                        self._offset = index1
+        self._cache['ArithmeticOperator'][index0] = (address0, self._offset)
+        return address0
+
     def _read_Operand(self):
         address0, index0 = FAILURE, self._offset
         cached = self._cache['Operand'].get(index0)
@@ -1431,16 +1575,16 @@ class Grammar(object):
             self._offset = cached[1]
             return cached[0]
         index1 = self._offset
-        address0 = self._read_Null()
+        address0 = self._read_ArithmeticOperation()
         if address0 is FAILURE:
             self._offset = index1
-            address0 = self._read_Number()
+            address0 = self._read_Null()
             if address0 is FAILURE:
                 self._offset = index1
                 address0 = self._read_Literal()
                 if address0 is FAILURE:
                     self._offset = index1
-                    address0 = self._read_Reference()
+                    address0 = self._read_ArithmeticOperand()
                     if address0 is FAILURE:
                         self._offset = index1
         self._cache['Operand'][index0] = (address0, self._offset)
@@ -1685,7 +1829,7 @@ class Grammar(object):
         if elements0 is None:
             address0 = FAILURE
         else:
-            address0 = TreeNode17(self._input[index1:self._offset], index1, elements0)
+            address0 = TreeNode18(self._input[index1:self._offset], index1, elements0)
             self._offset = self._offset
         self._cache['Semicolon'][index0] = (address0, self._offset)
         return address0
