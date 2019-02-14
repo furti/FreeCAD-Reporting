@@ -78,7 +78,7 @@ grammar sql
     # Basics
     Operand <- ArithmeticOperation / Null / Literal / ArithmeticOperand
 
-    Reference <- [a-zA-Z0-9]+ %make_reference
+    Reference <- [a-zA-Z0-9\.]+ %make_reference
 
     Literal <- "'" (!"'" .)* "'" %make_literal
 

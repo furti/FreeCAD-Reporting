@@ -395,12 +395,18 @@ class ArithmeticExtractor(object):
 class Reference(object):
     def __init__(self, value):
         self.value = value
+        self.properties = value.split('.')
 
     def getValue(self, o):
-        if hasattr(o, self.value):
-            return getattr(o, self.value)
+        actualValue = o
 
-        return None
+        for p in self.properties:
+            if hasattr(actualValue, p):
+                actualValue = getattr(actualValue, p)
+            else:
+                return None
+
+        return actualValue
 
     def __str__(self):
         return '$%s' % self.value

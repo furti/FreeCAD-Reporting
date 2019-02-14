@@ -6,12 +6,13 @@ class ProxyObject(object):
 
 
 class DocumentObject(object):
-    def __init__(self, name, tag, role, num, list=None):
+    def __init__(self, name, tag, role, num, list=None, subobject=None):
         self.name = name
         self.tag = tag
         self.role = role
         self.num = num
         self.list = list
+        self.subobject = subobject
 
     def __str__(self):
         return 'name: %s, tag: %s, role: %s, num: %s' % (self.name, self.tag, self.role, self.num)
@@ -21,8 +22,8 @@ list1 = ['list1']
 list2 = ['list2']
 
 wall = DocumentObject('Wall', 'inside', 'wall', 1, list1)
-window = DocumentObject('Window', 'living', 'window', 2, list1)
-space = DocumentObject('Space', 'living', 'space', 3, list2)
+window = DocumentObject('Window', 'living', 'window', 2, list1, wall)
+space = DocumentObject('Space', 'living', 'space', 3, list2, window)
 space001 = DocumentObject('Space001', 'bedroom', 'space', 4, list1)
 space002 = DocumentObject('Space002', 'bedroom', 'space', 5, list2)
 space003 = DocumentObject('Space003', 'something', 'space', 6)
@@ -310,6 +311,11 @@ def referenceCalculation():
 
     assert result == [[2], [4], [6], [8], [10], [12], [None]]
 
+def nestedProperties():
+    result = executeStatement(
+        "Select subobject.name From document Where subobject IS NOT NULL")
+
+    assert result == [['Wall'], ['Window']]
 
 def run():
     statementShouldParseWithDifferentStyles()
@@ -342,5 +348,6 @@ def run():
     renamedColumnNamesShouldBeCorrect()
     simpleCalculation()
     referenceCalculation()
+    nestedProperties()
 
     print('\nsuccess')
