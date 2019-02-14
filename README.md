@@ -175,7 +175,7 @@ Group By <GroupingColumns>
 Columns is a comma separated list of attributes you want in the result.
 
 ```sql
-Select Attribute1, Attribute2, 'sometext', sum(Attribute3)
+Select Attribute1, Attribute2, 'sometext', sum(Attribute3) As 'Sum'
 From document
 ```
 
@@ -193,6 +193,15 @@ There are also some non grouping functions. These can be used like normal refere
 
 Without a group by clause, it is not possible to mix references and aggregating functions in a select statements. The only exceptions are static values (E.g. "Select 'Number of objects', Count(*).."). 
 Only a single row will be returned for such a query. See ```Group by``` for more details on mixing attributes and functions.
+
+#### Column names
+
+By default the name of a column will be the literal text of the expression. E.g.
+ - "sum(Attribute3)"
+ - "Attribute2"
+ - "sometext"
+
+Sometimes this is not what you want. Especially for columns containing a function. You can use the ```AS``` clause to give a column a explicit name like we did with the ```sum(Attribute3)``` column above.
 
 ### From \<Source>
 
