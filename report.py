@@ -8,6 +8,8 @@ from pivy import coin
 from report_utils.resource_utils import uiPath
 from report_utils import logger
 from sql import freecad_sql_parser
+from sql.sql_parser import SqlStatementValidationError
+from sql.sql_grammar import ParseError
 
 from PySide2.QtWidgets import QTableWidgetItem
 from PySide2.QtWidgets import QPlainTextEdit
@@ -226,7 +228,7 @@ class ReportSpreadsheet(object):
 
 
 class ReportEntryWidget(QGroupBox):
-    def __init__(self, header, statement, skipRowsAfter, skipColumnNames, printResultInBold, panel, index):
+    def __init__(self, header, statement, skipRowsAfter, skipColumnNames, printResultInBold, panel, index, hasError):
         super().__init__()
 
         self.panel = panel
@@ -244,6 +246,9 @@ class ReportEntryWidget(QGroupBox):
         self.printResultInBoldEdit.setChecked(printResultInBold)
 
         self.removeButton.clicked.connect(self.remove)
+
+        if hasError:
+            self.statementEdit.setStyleSheet('background-color: #f5dbd9;')
 
         self.initUi()
 
@@ -297,11 +302,11 @@ class ReportConfigPanel():
     def setupRows(self):
         for statement in self.report.statements:
             self.addRow(statement.header, statement.plainTextStatement,
-                        statement.skipRowsAfter, statement.skipColumnNames, statement.printResultInBold)
+                        statement.skipRowsAfter, statement.skipColumnNames, statement.printResultInBold, statement.parserError)
 
-    def addRow(self, header=None, statement=None, skipRowsAfter=False, skipColumnNames=False, printResultInBold=False):
+    def addRow(self, header=None, statement=None, skipRowsAfter=False, skipColumnNames=False, printResultInBold=False, hasError=False):
         widget = ReportEntryWidget(header, statement, skipRowsAfter,
-                                   skipColumnNames, printResultInBold, self, len(self.entries))
+                                   skipColumnNames, printResultInBold, self, len(self.entries), hasError)
 
         self.entries.append(widget)
 
@@ -337,18 +342,34 @@ class ReportStatement(object):
     def __init__(self, header, plainTextStatement, skipRowsAfter=False, skipColumnNames=False, printResultInBold=False):
         self.header = header
         self.plainTextStatement = plainTextStatement
-        self.statement = SQL_PARSER.parse(plainTextStatement)
         self.skipRowsAfter = skipRowsAfter
         self.skipColumnNames = skipColumnNames
         self.printResultInBold = printResultInBold
+        self.parserError = False
+
+        try:
+            self.statement = SQL_PARSER.parse(plainTextStatement)
+        except (SqlStatementValidationError, ParseError):
+            self.parserError = True
+            self.statement = None
+            
+            import logging
+            logging.exception('')
+
 
         logger.debug('parsed statement %s', (plainTextStatement))
         logger.debug('to %s', (self.statement))
 
     def execute(self):
+        if self.parserError:
+            return [['The statement has some errors. Check console for further details']]
+
         return self.statement.execute()
 
     def getColumnNames(self):
+        if self.parserError:
+            return ['Error']
+        
         return self.statement.getColumnNames()
 
     def serializeState(self):
