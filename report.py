@@ -6,6 +6,7 @@ import json
 from FreeCAD import Units
 from pivy import coin
 from report_utils.resource_utils import uiPath
+from report_utils.resource_utils import iconPath
 from report_utils import logger
 from sql import freecad_sql_parser
 from sql.sql_parser import SqlStatementValidationError
@@ -352,10 +353,9 @@ class ReportStatement(object):
         except (SqlStatementValidationError, ParseError):
             self.parserError = True
             self.statement = None
-            
+
             import logging
             logging.exception('')
-
 
         logger.debug('parsed statement %s', (plainTextStatement))
         logger.debug('to %s', (self.statement))
@@ -369,7 +369,7 @@ class ReportStatement(object):
     def getColumnNames(self):
         if self.parserError:
             return ['Error']
-        
+
         return self.statement.getColumnNames()
 
     def serializeState(self):
@@ -524,6 +524,9 @@ class ViewProviderReport():
     def unsetEdit(self, vobj, mode):
         # FreeCADGui.Control.closeDialog()
         return False
+
+    def getIcon(self):
+        return iconPath("Workbench.svg")
 
     def claimChildren(self):
         return [self.Object.Result]
