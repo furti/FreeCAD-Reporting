@@ -279,4 +279,7 @@ You can not use the ```Label``` Attribute in the select clause, because it is no
 The Workbench does not need any additional software to be installed to be fully functional.
 
 ## Support
-Found a bug? Have a nice feature request? simply create an issue in this repository or post to this FreeCAD Forum thread https://forum.freecadweb.org/viewtopic.php?f=9&t=33403.
+Found a bug? Have a nice feature request? simply create an issue in this repository or post to this FreeCAD Forum threads
+
+Bug/Help Request: https://forum.freecadweb.org/viewtopic.php?f=3&t=38225
+New Features: https://forum.freecadweb.org/viewtopic.php?f=10&t=38224
