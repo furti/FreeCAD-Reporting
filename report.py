@@ -467,6 +467,51 @@ class Report():
         finally:
             fileObject.close()
 
+    def convertValue(self, value):
+        if value is None:
+            return ''
+        elif isinstance(value, Units.Quantity):
+            return value.UserString
+        
+        return str(value)
+
+    def exportXLS(self, selected_file):
+        import xlsxwriter
+
+        try:
+            workbook   = xlsxwriter.Workbook(selected_file)
+            boldFormat = workbook.add_format({'bold': True})
+
+            for statement in self.statements:
+                worksheet = workbook.add_worksheet(statement.header)
+                lineNumber = 1
+
+                if not statement.skipColumnNames:
+                    columnName = None
+
+                    for columnLabel in statement.getColumnNames():
+                        columnName = nextColumnName(columnName)
+                        cellName = buildCellName(columnName, lineNumber)
+                        worksheet.write_string(cellName, columnLabel, boldFormat)
+                    lineNumber += 1
+
+                rows = statement.execute()
+
+                for row in rows:
+                    columnName = None
+
+                    for column in row:
+                        columnName = nextColumnName(columnName)
+                        cellName = buildCellName(columnName, lineNumber)
+                        worksheet.write_string(cellName, self.convertValue(column), 
+                            boldFormat if statement.printResultInBold else None) # TODO fix unit format
+
+                    lineNumber += 1
+                    
+        finally:
+            workbook.close()
+
+
     def __getstate__(self):
         state = ['VERSION:1']
 
