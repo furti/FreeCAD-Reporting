@@ -467,20 +467,17 @@ class Report():
         finally:
             fileObject.close()
 
-    def convertValue(self, value):
-        if value is None:
-            return ''
-        elif isinstance(value, Units.Quantity):
-            return value.UserString
-        
-        return str(value)
-
     def exportXLS(self, selected_file):
         import xlsxwriter
 
         try:
             workbook   = xlsxwriter.Workbook(selected_file)
             boldFormat = workbook.add_format({'bold': True})
+            fmts = {}
+            def _get_format(unit):
+                if not unit in fmts:
+                    fmts[unit] = workbook.add_format({'num_format': '#.??\\ \\' + unit})
+                return fmts[unit]
 
             for statement in self.statements:
                 worksheet = workbook.add_worksheet(statement.header)
@@ -500,11 +497,17 @@ class Report():
                 for row in rows:
                     columnName = None
 
-                    for column in row:
+                    for value in row:
                         columnName = nextColumnName(columnName)
                         cellName = buildCellName(columnName, lineNumber)
-                        worksheet.write_string(cellName, self.convertValue(column), 
-                            boldFormat if statement.printResultInBold else None) # TODO fix unit format
+                        fmt = None
+                        if isinstance(value, Units.Quantity):
+                            un = value.getUserPreferred()
+                            worksheet.write(cellName, value.Value/un[1], _get_format(un[2]))
+                        elif value is None:
+                            worksheet.write_string(cellName, '')
+                        else:
+                            worksheet.write_string(cellName, str(value))
 
                     lineNumber += 1
                     
