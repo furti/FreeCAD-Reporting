@@ -468,7 +468,12 @@ class Report():
             fileObject.close()
 
     def exportXLS(self, selected_file):
-        import xlsxwriter
+        try:
+            import xlsxwriter
+
+        except:
+            FreeCAD.Console.PrintError("It looks like 'xlsxwriter' could not be found on your system. Please see https://xlsxwriter.readthedocs.io/getting_started.html how to install it.")
+            return
 
         try:
             workbook   = xlsxwriter.Workbook(selected_file)
