@@ -14,3 +14,4 @@ toolbarManager = ReportingToolbarManager()
 import create_report
 import export_report_config
 import import_report_config
+import export_report_xls
