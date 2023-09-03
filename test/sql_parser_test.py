@@ -41,7 +41,6 @@ documentObjects = [
     norole
 ]
 
-
 def documentObjectsSupplier():
     return documentObjects
 
@@ -162,6 +161,16 @@ def shouldOnlyShowNoneAttributes():
 
     assert result == [[norole]]
 
+def selectWithLikeClause():
+    result = executeStatement(
+        "Select * From document Where name Like 'Space%'")
+
+    assert result == [[space], [space001], [space002], [space003]]
+ 
+    result = executeStatement(
+        "Select * From document Where name Like 'Space0?2'")
+
+    assert result == [[space002]]
 
 def selectWithSumFunction():
     result = executeStatement(
@@ -330,6 +339,7 @@ def run():
     selectWithBracketsWhereClauseReversed()
     shouldFilterNoneAttributes()
     shouldOnlyShowNoneAttributes()
+    selectWithLikeClause()
     selectWithSumFunction()
     selectWithCountFunction()
     selectWithMinFunction()

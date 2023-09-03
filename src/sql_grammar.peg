@@ -43,6 +43,7 @@ grammar sql
         / "<" %make_comp_operator_lt
         / `IS NOT` %make_comp_operator_is_not
         / `IS` %make_comp_operator_is
+        / `LIKE` %make_comp_operator_like
 
     # Boolean End
 

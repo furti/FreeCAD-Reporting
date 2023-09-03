@@ -246,6 +246,11 @@ There are also two special comparison operators available to check for ```None``
  - **IS NULL**: Checks if the left value is None.
  - **IS NOT NULL**: Check if the left value is not None. This is especially usefull to filter all objects that do not have the given attribute assigned.
 
+There is also the special comparison operator ```LIKE``` available that let you compare text using a pattern. The pattern can contain the following special characters:
+ - **?** matches a single character
+ - **%** matches zero, one or more characters.
+For example the pattern ```Body0?1``` would match the strings ```Body001``` or ```Body011``` but would not match ```Body002```. And the pattern ```Body%``` would match all strings starting with Body. E.g. ```Body001``` or ```Body123```. You can also mix multiple special characters in the pattern.
+
 To combine multiple comparisons you can use the ```AND``` and ```OR``` keywords. You can also use Brackets ```(``` ```)``` to build complex expressions.
 
 ### Group By \<GroupingColumns>

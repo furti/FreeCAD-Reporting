@@ -1073,6 +1073,21 @@ class Grammar(object):
                                             self._expected.append('`IS`')
                                     if address0 is FAILURE:
                                         self._offset = index1
+                                        chunk8 = None
+                                        if self._offset < self._input_size:
+                                            chunk8 = self._input[self._offset:self._offset + 4]
+                                        if chunk8 is not None and chunk8.lower() == 'LIKE'.lower():
+                                            address0 = self._actions.make_comp_operator_like(self._input, self._offset, self._offset + 4)
+                                            self._offset = self._offset + 4
+                                        else:
+                                            address0 = FAILURE
+                                            if self._offset > self._failure:
+                                                self._failure = self._offset
+                                                self._expected = []
+                                            if self._offset == self._failure:
+                                                self._expected.append('`LIKE`')
+                                        if address0 is FAILURE:
+                                            self._offset = index1
         self._cache['ComparisonOperator'][index0] = (address0, self._offset)
         return address0
 

@@ -609,6 +609,20 @@ class IsNotComparisonOperator(object):
     def __str__(self):
         return 'IS NOT'
 
+class LikeComparisonOperator(object):
+    def compare(self, left, right):
+        if left is None or right is None:
+            return False
+
+        pattern = str(right).replace('%', '.*').replace('?', '.')
+        regex = re.compile(pattern)
+        value = str(left)
+
+        return regex.match(value) is not None
+
+    def __str__(self):
+        return 'LIKE'
+
 
 class AndBooleanOperator(object):
     def compare(self, left, right):
@@ -1092,6 +1106,9 @@ class ParserActions(object):
 
     def make_comp_operator_is_not(self, input, start, end):
         return IsNotComparisonOperator()
+
+    def make_comp_operator_like(self, input, start, end):
+        return LikeComparisonOperator()
 
     def make_boolean_operator_and(self, input, start, end):
         return AndBooleanOperator()
