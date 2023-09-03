@@ -778,6 +778,41 @@ class TypeFunctionOperator(FunctionOperator):
     def __eq__(self, obj):
         return isinstance(obj, TypeFunctionOperator)
 
+class LowerFunctionOperator(FunctionOperator):
+    def __init__(self):
+        self.grouping = False
+
+    def execute(self, left, right):
+        if right is None:
+            return None
+        
+        text = str(right)
+
+        return text.lower()
+
+    def __str__(self):
+        return 'LOWER'
+
+    def __eq__(self, obj):
+        return isinstance(obj, LowerFunctionOperator)
+
+class UpperFunctionOperator(FunctionOperator):
+    def __init__(self):
+        self.grouping = False
+
+    def execute(self, left, right):
+        if right is None:
+            return None
+        
+        text = str(right)
+
+        return text.upper()
+
+    def __str__(self):
+        return 'LOWER'
+
+    def __eq__(self, obj):
+        return isinstance(obj, LowerFunctionOperator)
 
 class Calculation(object):
     def __init__(self, operator, dataExtractor, name):
@@ -1133,6 +1168,12 @@ class ParserActions(object):
 
     def make_type_operator(self, input, start, end):
         return TypeFunctionOperator()
+    
+    def make_lower_operator(self, input, start, end):
+        return LowerFunctionOperator()
+
+    def make_upper_operator(self, input, start, end):
+        return UpperFunctionOperator()
 
     def make_calculation(self, input, start, end, elements):
         operator = findFunctionOperator(elements)

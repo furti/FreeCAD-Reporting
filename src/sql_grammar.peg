@@ -56,6 +56,8 @@ grammar sql
         / `Min` %make_min_operator 
         / `Max` %make_max_operator
         / `Type` %make_type_operator
+        / `Lower` %make_lower_operator
+        / `Upper` %make_upper_operator
 
     MultiParamFunction <- MultiParamFunctionName _ "(" _ (Asterisk / Operand) 
                           (_ "," _ (Asterisk / Operand))* ")" %make_multiparam_calculation
@@ -77,7 +79,7 @@ grammar sql
     # Arithmetic End
 
     # Basics
-    Operand <- ArithmeticOperation / Null / Literal / ArithmeticOperand
+    Operand <- ArithmeticOperation / Function / Null / Literal / ArithmeticOperand
 
     Reference <- [a-zA-Z0-9\.]+ %make_reference
 

@@ -1267,6 +1267,36 @@ class Grammar(object):
                                 self._expected.append('`Type`')
                         if address0 is FAILURE:
                             self._offset = index1
+                            chunk5 = None
+                            if self._offset < self._input_size:
+                                chunk5 = self._input[self._offset:self._offset + 5]
+                            if chunk5 is not None and chunk5.lower() == 'Lower'.lower():
+                                address0 = self._actions.make_lower_operator(self._input, self._offset, self._offset + 5)
+                                self._offset = self._offset + 5
+                            else:
+                                address0 = FAILURE
+                                if self._offset > self._failure:
+                                    self._failure = self._offset
+                                    self._expected = []
+                                if self._offset == self._failure:
+                                    self._expected.append('`Lower`')
+                            if address0 is FAILURE:
+                                self._offset = index1
+                                chunk6 = None
+                                if self._offset < self._input_size:
+                                    chunk6 = self._input[self._offset:self._offset + 5]
+                                if chunk6 is not None and chunk6.lower() == 'Upper'.lower():
+                                    address0 = self._actions.make_upper_operator(self._input, self._offset, self._offset + 5)
+                                    self._offset = self._offset + 5
+                                else:
+                                    address0 = FAILURE
+                                    if self._offset > self._failure:
+                                        self._failure = self._offset
+                                        self._expected = []
+                                    if self._offset == self._failure:
+                                        self._expected.append('`Upper`')
+                                if address0 is FAILURE:
+                                    self._offset = index1
         self._cache['FunctionName'][index0] = (address0, self._offset)
         return address0
 
@@ -1593,15 +1623,18 @@ class Grammar(object):
         address0 = self._read_ArithmeticOperation()
         if address0 is FAILURE:
             self._offset = index1
-            address0 = self._read_Null()
+            address0 = self._read_Function()
             if address0 is FAILURE:
                 self._offset = index1
-                address0 = self._read_Literal()
+                address0 = self._read_Null()
                 if address0 is FAILURE:
                     self._offset = index1
-                    address0 = self._read_ArithmeticOperand()
+                    address0 = self._read_Literal()
                     if address0 is FAILURE:
                         self._offset = index1
+                        address0 = self._read_ArithmeticOperand()
+                        if address0 is FAILURE:
+                            self._offset = index1
         self._cache['Operand'][index0] = (address0, self._offset)
         return address0
 

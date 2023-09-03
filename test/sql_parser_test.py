@@ -172,6 +172,17 @@ def selectWithLikeClause():
 
     assert result == [[space002]]
 
+def selectWithFunctionInWhereClause():
+    result = executeStatement(
+        "Select * From document Where Lower(name) Like 'space%'")
+
+    assert result == [[space], [space001], [space002], [space003]]
+ 
+    result = executeStatement(
+        "Select * From document Where upper(name) Like 'SPACE0?2'")
+
+    assert result == [[space002]]
+
 def selectWithSumFunction():
     result = executeStatement(
         "Select Sum(num) From document")
@@ -340,6 +351,7 @@ def run():
     shouldFilterNoneAttributes()
     shouldOnlyShowNoneAttributes()
     selectWithLikeClause()
+    selectWithFunctionInWhereClause()
     selectWithSumFunction()
     selectWithCountFunction()
     selectWithMinFunction()
