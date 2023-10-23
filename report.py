@@ -467,6 +467,59 @@ class Report():
         finally:
             fileObject.close()
 
+    def exportXLS(self, selected_file):
+        try:
+            import xlsxwriter
+
+        except:
+            FreeCAD.Console.PrintError("It looks like 'xlsxwriter' could not be found on your system. Please see https://xlsxwriter.readthedocs.io/getting_started.html how to install it.")
+            return
+
+        try:
+            workbook   = xlsxwriter.Workbook(selected_file)
+            boldFormat = workbook.add_format({'bold': True})
+            fmts = {}
+            def _get_format(unit):
+                if not unit in fmts:
+                    fmts[unit] = workbook.add_format({'num_format': '#.??\\ \\' + unit})
+                return fmts[unit]
+
+            for statement in self.statements:
+                worksheet = workbook.add_worksheet(statement.header)
+                lineNumber = 1
+
+                if not statement.skipColumnNames:
+                    columnName = None
+
+                    for columnLabel in statement.getColumnNames():
+                        columnName = nextColumnName(columnName)
+                        cellName = buildCellName(columnName, lineNumber)
+                        worksheet.write_string(cellName, columnLabel, boldFormat)
+                    lineNumber += 1
+
+                rows = statement.execute()
+
+                for row in rows:
+                    columnName = None
+
+                    for value in row:
+                        columnName = nextColumnName(columnName)
+                        cellName = buildCellName(columnName, lineNumber)
+                        fmt = None
+                        if isinstance(value, Units.Quantity):
+                            un = value.getUserPreferred()
+                            worksheet.write(cellName, value.Value/un[1], _get_format(un[2]))
+                        elif value is None:
+                            worksheet.write_string(cellName, '')
+                        else:
+                            worksheet.write_string(cellName, str(value))
+
+                    lineNumber += 1
+                    
+        finally:
+            workbook.close()
+
+
     def __getstate__(self):
         state = ['VERSION:1']
 
