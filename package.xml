@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
+  <name>FreeCAD Reporting</name>
+  <description>The Reporting Workbench makes it possible to extract information out of a FreeCAD document using SQL via Python or via the GUI.</description>
+  <version>0.6</version>
+  <date>2023-09-03</date>
+  <maintainer email="daniel.furtlehner@gmx.net">Daniel Furtlehner (furti)</maintainer>
+  <license file="LICENSE">LGPLv2.1</license>
+  <url type="repository" branch="main">https://github.com/chennes/FreeCAD-Package</url>
+  <url type="website">https://github.com/furti/FreeCAD-Reporting</url>
+  <url type="bugtracker">https://github.com/furti/FreeCAD-Reporting/issues</url>
+  <icon>Resources/Icons/Workbench.svg</icon>
+
+  <content>
+    <workbench>
+      <classname>FreeCAD Reporting</classname>
+      <subdirectory>./</subdirectory>
+    </workbench>
+  </content>
+
+</package>
